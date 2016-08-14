@@ -52,7 +52,7 @@ What database should be used? Is in-memory good enough?
 5. Refresh rudimentary client side with production level implementation (A)
 6. Beta test
 7. Fix bugs
-8. Build out secondary operator transport (non-laptop) (D)
+8. Build out secondary operator transport \[non-laptop\] (D)
 
 ### Bonus levels
 
