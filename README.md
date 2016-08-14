@@ -23,10 +23,12 @@ A. Client browser script
 
 B. Client-server communication (Websockets)
   - Receive/Deliver events (messages)
+
 C. Server database operations (Create/read/update/delete)
   - Keep record of chats for resumption
   - Keep record of clients and chats for analysis
   - Keep record of operator tagging
+
 D. Server-operator communication
   - Interpret actions (Tag, messages)
   - Operation communication (IRC, facebook, sms, phone/mobile app, bot)
