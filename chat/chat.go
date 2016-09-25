@@ -15,6 +15,10 @@ type Chat struct {
   updatedTime uint64
 }
 
+func Create(chat Chat) Chat {
+
+}
+
 func (this *Chat) String() string {
   // return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
   return this.id

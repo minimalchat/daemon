@@ -62,6 +62,13 @@ func main() {
 
     // Create new chat, assign user
 
+    // Message event
+    sock.On("client:message", func (msg string) {
+      log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", sock.Id(), msg))
+
+      // Save chat
+    })
+
     // Disconnection event
     sock.On("disconnection", func () {
       log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
