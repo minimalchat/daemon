@@ -3,8 +3,8 @@ package person
 import "fmt"
 
 type Person struct {
-  FirstName string
-  LastName string
+  FirstName string `json:"first_name"`
+  LastName string `json:"last_name"`
 }
 
 func (this *Person) String() string {

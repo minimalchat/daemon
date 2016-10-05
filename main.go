@@ -8,8 +8,12 @@ import (
   // "io"
   "net/http"
 
-  "github.com/googollee/go-socket.io"
-  // "github.com/mihok/lets-chat/operator"
+  "github.com/julienschmidt/httprouter" // Http router
+  "github.com/googollee/go-socket.io" // Socket
+
+  "github.com/mihok/letschat-daemon/rest"
+  "github.com/mihok/letschat-daemon/store"
+  "github.com/mihok/letschat-daemon/client"
   // "github.com/mihok/lets-chat/person"
  )
 
@@ -41,6 +45,7 @@ func main() {
 
   config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
 
+  db := new(store.InMemory)
 
   // Socket.io
   socket, err := socketio.NewServer(nil)
@@ -53,6 +58,9 @@ func main() {
   socket.On("connection", func (sock socketio.Socket) {
     log.Println(DEBUG, "socket:", fmt.Sprintf("Incoming connection %s", sock.Id()))
 
+    client := client.Client{Id: sock.Id()}
+
+    db.Put(client)
     // Does this user match a previous fingerprint ?
     //  Does user have cookie?
     //  Does user have known IP?
@@ -77,19 +85,26 @@ func main() {
     })
   })
 
-  socket.On("error", func(so socketio.Socket, err error) {
+  socket.On("error", func (so socketio.Socket, err error) {
       log.Println(ERROR, "socket:", err)
   })
 
+  router := httprouter.New()
+
   // Socket.io handler
-  http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
+  router.HandlerFunc("GET", "/socket.io/", func (resp http.ResponseWriter, req *http.Request) {
     resp.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
     resp.Header().Set("Access-Control-Allow-Credentials", "true")
 
     socket.ServeHTTP(resp, req)
   })
 
+  router.GET("/api/", rest.CatchAll)
+
+  router.GET("/api/operators", rest.Operators(db))
+  router.GET("/api/clients", rest.Clients(db))
+
   // Server
   log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))
-  log.Fatal(http.ListenAndServe(config.Host, nil))
+  log.Fatal(http.ListenAndServe(config.Host, router))
 }

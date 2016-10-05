@@ -3,7 +3,7 @@ package operator
 import (
   "fmt"
 
-  "github.com/mihok/lets-chat/person"
+  "github.com/mihok/letschat-daemon/person"
 )
 
 
@@ -11,9 +11,13 @@ import (
 
 type Operator struct {
   person.Person
-  UserName string
+  UserName string `json:"username"`
 }
 
-func (this *Operator) String() string {
+func (this Operator) String() string {
   return fmt.Sprintf("%s [%s %s]", this.UserName, this.FirstName, this.LastName)
+}
+
+func (this Operator) StoreKey() string {
+  return fmt.Sprintf("operator.%s", this.UserName)
 }
