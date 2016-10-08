@@ -2,9 +2,6 @@
 package store
 
 import (
-  // "log"
-  // "errors"
-  // "math/rand"
   "sync"
   "strings"
 )
@@ -20,8 +17,6 @@ type InMemory struct {
   data map[string]StoreKeyer
 }
 
-// var errUnexpected = errors.New("an unexpected error")
-
 // Put stores a value
 func (db *InMemory) Put(v StoreKeyer) error {
   db.Lock()
@@ -30,10 +25,6 @@ func (db *InMemory) Put(v StoreKeyer) error {
   if db.data == nil {
     db.data = make(map[string]StoreKeyer)
   }
-
-  // if rand.Intn(10) < 5 {
-  //   return errUnexpected
-  // }
 
   db.data[v.StoreKey()] = v
   return nil
@@ -44,13 +35,23 @@ func (db *InMemory) Get(k string) (StoreKeyer, error) {
   db.RLock()
   defer db.RUnlock()
 
-  // if rand.Intn(10) < 5 {
-  //   return nil, errUnexpected
-  // }
-
   return db.data[k], nil
 }
 
+// Remove a value
+func (db *InMemory) Remove(k string) error {
+  db.Lock()
+  defer db.Unlock()
+
+  if db.data == nil {
+    db.data = make(map[string]StoreKeyer)
+  }
+
+  delete(db.data, k)
+  return nil
+}
+
+// Search on keys
 func (db *InMemory) Search(q string) ([]StoreKeyer, error) {
   var result []StoreKeyer
 

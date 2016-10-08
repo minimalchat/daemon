@@ -3,6 +3,8 @@ package client
 import (
   "fmt"
 
+  "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+
   "github.com/mihok/letschat-daemon/person"
 )
 
@@ -12,7 +14,16 @@ import (
 type Client struct {
   person.Person
   Name string `json:"name"`
-  Id string `json:"id"`
+  ID string `json:"id"`
+}
+
+func Create(client Client) *Client {
+  if (client.ID == "") {
+    uuid, _ := uuid.NewRandom()
+    client.ID = uuid.String()
+  }
+
+  return &client
 }
 
 func (this Client) String() string {
@@ -20,5 +31,5 @@ func (this Client) String() string {
 }
 
 func (this Client) StoreKey() string {
-  return fmt.Sprintf("client.%s", this.Id)
+  return fmt.Sprintf("client.%s", this.ID)
 }

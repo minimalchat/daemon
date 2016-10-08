@@ -14,6 +14,10 @@ type Operator struct {
   UserName string `json:"username"`
 }
 
+func Create(operator Operator) *Operator {
+  return &operator
+}
+
 func (this Operator) String() string {
   return fmt.Sprintf("%s [%s %s]", this.UserName, this.FirstName, this.LastName)
 }

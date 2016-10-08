@@ -5,15 +5,18 @@ import (
   "fmt"
 
   "flag"
-  // "io"
+  "time"
   "net/http"
 
   "github.com/julienschmidt/httprouter" // Http router
   "github.com/googollee/go-socket.io" // Socket
+  // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
   "github.com/mihok/letschat-daemon/rest"
   "github.com/mihok/letschat-daemon/store"
+  "github.com/mihok/letschat-daemon/operator"
   "github.com/mihok/letschat-daemon/client"
+  "github.com/mihok/letschat-daemon/chat"
   // "github.com/mihok/lets-chat/person"
  )
 
@@ -42,6 +45,7 @@ func main() {
 
   flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
   flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
+  flag.Parse()
 
   config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
 
@@ -58,17 +62,37 @@ func main() {
   socket.On("connection", func (sock socketio.Socket) {
     log.Println(DEBUG, "socket:", fmt.Sprintf("Incoming connection %s", sock.Id()))
 
-    client := client.Client{Id: sock.Id()}
+    var c *client.Client
+    var o *operator.Operator
 
-    db.Put(client)
+    hasFingerprint := false
+    hasCookie := false
+    hasIP := false
     // Does this user match a previous fingerprint ?
     //  Does user have cookie?
     //  Does user have known IP?
 
-    // If yes, lets create/update the user
-    // If no, lets create new user
+    // If yes, lets get/update the user
+    if (hasFingerprint && hasCookie && hasIP) {
+
+    } else { // If no, lets create new user
+      c = client.Create(client.Client{
+          Name: "Site Visitor",
+        })
+
+      db.Put(c)
+    }
 
     // Create new chat, assign user
+    chat := chat.Chat{
+      ID: sock.Id(),
+      Client: c,
+      Operator: o,
+      CreationTime: time.Now(),
+      UpdatedTime: time.Now(),
+    }
+
+    db.Put(chat)
 
     // Message event
     sock.On("client:message", func (msg string) {
@@ -91,6 +115,24 @@ func main() {
 
   router := httprouter.New()
 
+  // 404
+  router.NotFound = http.HandlerFunc(func (resp http.ResponseWriter, req *http.Request) {
+    resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+    resp.WriteHeader(http.StatusNotFound)
+
+    fmt.Fprintf(resp, "Not Found")
+  })
+
+  // 405
+  router.HandleMethodNotAllowed = true
+  router.MethodNotAllowed = http.HandlerFunc(func (resp http.ResponseWriter, req *http.Request) {
+    resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+    resp.WriteHeader(http.StatusMethodNotAllowed)
+
+    fmt.Fprintf(resp, "Method Not Allowed")
+  })
+
+
   // Socket.io handler
   router.HandlerFunc("GET", "/socket.io/", func (resp http.ResponseWriter, req *http.Request) {
     resp.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
@@ -99,10 +141,46 @@ func main() {
     socket.ServeHTTP(resp, req)
   })
 
+
+  router.GET("/api", rest.CatchAll)
   router.GET("/api/", rest.CatchAll)
 
-  router.GET("/api/operators", rest.Operators(db))
-  router.GET("/api/clients", rest.Clients(db))
+  // Operators
+  router.GET("/api/operators", rest.ReadOperators(db)) // Check
+  router.GET("/api/operator/:id", rest.ReadOperator(db)) // Check
+  router.POST("/api/operator", rest.CreateOrUpdateOperator(db)) // Check
+  router.POST("/api/operator/", rest.CreateOrUpdateOperator(db)) // Check
+  router.PUT("/api/operator/:id", rest.CreateOrUpdateOperator(db)) // Check
+  router.PATCH("/api/operator/:id", rest.CreateOrUpdateOperator(db)) // Check
+  router.DELETE("/api/operator/:id", rest.DeleteOperator(db))
+
+  // Clients
+  router.GET("/api/clients", rest.ReadClients(db)) // Check
+  router.GET("/api/client/:id", rest.ReadClient(db)) // Check
+  router.POST("/api/client", rest.CreateOrUpdateClient(db)) // Check
+  router.POST("/api/client/", rest.CreateOrUpdateClient(db)) // Check
+  router.PUT("/api/client/:id", rest.CreateOrUpdateClient(db)) // Check
+  router.PATCH("/api/client/:id", rest.CreateOrUpdateClient(db)) // Check
+  router.DELETE("/api/client/:id", rest.DeleteClient(db)) // Check
+
+  // Chats
+  router.GET("/api/chats", rest.ReadChats(db)) // Check
+  router.GET("/api/chat/:id", rest.ReadChat(db)) // Check
+  router.POST("/api/chat", rest.CreateOrUpdateChat(db)) // Check
+  router.POST("/api/chat/", rest.CreateOrUpdateChat(db)) // Check
+  router.PUT("/api/chat/:id", rest.CreateOrUpdateChat(db)) // Check
+  router.PATCH("/api/chat/:id", rest.CreateOrUpdateChat(db)) // Check
+  router.DELETE("/api/chat/:id", rest.DeleteChat(db)) // Check
+
+  // Chat Messages
+  router.GET("/api/chat/:id/messages", rest.ReadMessages(db))
+  router.GET("/api/chat/:id/message/:mid", rest.ReadMessage(db))
+  router.POST("/api/chat/:id/message", rest.CreateMessage(db)) // Check
+  router.POST("/api/chat/:id/message/", rest.CreateMessage(db)) // Check
+  router.PUT("/api/chat/:id/message/:mid", rest.UpdateMessage(db)) // Check
+  router.PATCH("/api/chat/:id/message/:mid", rest.UpdateMessage(db)) // Check
+  router.DELETE("/api/chat/:id/message/:mid", rest.DeleteMessage(db)) // Check
+
 
   // Server
   log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))
