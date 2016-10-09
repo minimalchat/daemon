@@ -1,6 +1,7 @@
 package rest
 
 import (
+  "log"
   "fmt"
   "net/http"
   "encoding/json"
@@ -20,6 +21,8 @@ func ReadClients (db *store.InMemory) func (resp http.ResponseWriter, req *http.
 
     result["clients"] = clients;
 
+    log.Println(DEBUG, "client:", "Reading clients", fmt.Sprintf("(%d records)", len(clients)))
+
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     resp.WriteHeader(http.StatusOK)
     if err := json.NewEncoder(resp).Encode(result); err != nil {
@@ -34,6 +37,8 @@ func ReadClients (db *store.InMemory) func (resp http.ResponseWriter, req *http.
 func ReadClient (db *store.InMemory) func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
   return func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
     cl, _ := db.Get(fmt.Sprintf("client.%s", params.ByName("id")))
+
+    log.Println(DEBUG, "client:", "Reading client", params.ByName("id"))
 
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     resp.WriteHeader(http.StatusOK)

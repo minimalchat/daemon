@@ -6,6 +6,7 @@ import (
 
   "github.com/mihok/letschat-daemon/operator"
   "github.com/mihok/letschat-daemon/client"
+  // "github.com/mihok/letschat-daemon/person"
 )
 
 type Chat struct {
@@ -23,4 +24,21 @@ func (this *Chat) String() string {
 
 func (this Chat) StoreKey() string {
   return fmt.Sprintf("chat.%s", this.ID)
+}
+
+
+type Message struct {
+  Timestamp time.Time `json:"timestamp"`
+  Content string `json:"content"`
+  Author string `json:"author"`
+  Chat string `json:"chat"`
+}
+
+func (this *Message) String() string {
+  // return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
+  return this.Content
+}
+
+func (this Message) StoreKey() string {
+  return fmt.Sprintf("message.%s-%d", this.Chat, this.Timestamp.Unix())
 }

@@ -1,13 +1,16 @@
 package rest
 
 import (
+  "log"
   "fmt"
   "net/http"
   "encoding/json"
 
   "github.com/julienschmidt/httprouter"
+  "github.com/googollee/go-socket.io" // Socket
 
   "github.com/mihok/letschat-daemon/store"
+  "github.com/mihok/letschat-daemon/chat"
 )
 
 
@@ -20,6 +23,8 @@ func ReadChats (db *store.InMemory) func (resp http.ResponseWriter, req *http.Re
     result := make(map[string]interface{})
 
     result["chats"] = chats;
+
+    log.Println(DEBUG, "chat:", "Reading chats", fmt.Sprintf("(%d records)", len(chats)))
 
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     resp.WriteHeader(http.StatusOK)
@@ -36,6 +41,8 @@ func ReadChats (db *store.InMemory) func (resp http.ResponseWriter, req *http.Re
 func ReadChat (db *store.InMemory) func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
   return func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
     ch, _ := db.Get(fmt.Sprintf("chat.%s", params.ByName("id")))
+
+    log.Println(DEBUG, "chat:", "Reading chat", params.ByName("id"))
 
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     if (ch != nil) {
@@ -65,8 +72,18 @@ func DeleteChat (db *store.InMemory) func (resp http.ResponseWriter, req *http.R
 // GET /api/chat/:id/messages
 func ReadMessages (db *store.InMemory) func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
   return func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+    messages, _ := db.Search(fmt.Sprintf("message.%s-", params.ByName("id")))
+    result := make(map[string]interface{})
+
+    result["messages"] = messages;
+
+    log.Println(DEBUG, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
+
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     resp.WriteHeader(http.StatusOK)
+    if err := json.NewEncoder(resp).Encode(result); err != nil {
+        panic(err)
+    }
   }
 }
 
@@ -80,7 +97,40 @@ func ReadMessage (db *store.InMemory) func (resp http.ResponseWriter, req *http.
 // POST / PUT /api/chat/:id/message
 func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
   return func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+    var msg *chat.Message
+
+    id := params.ByName("id")
+    decoder := json.NewDecoder(req.Body)
+
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+    if err := decoder.Decode(&msg); err != nil {
+      log.Println(DEBUG, "message:", "Bad Request", err)
+      resp.WriteHeader(http.StatusBadRequest)
+      return
+    }
+
+    if (id == "") {
+      log.Println(DEBUG, "message:", "Bad Request ID")
+      resp.WriteHeader(http.StatusBadRequest)
+      return
+    }
+
+    result, _ := db.Get(fmt.Sprintf("chat.%s", id))
+
+    if (result == nil) {
+      resp.WriteHeader(http.StatusNotFound)
+      return
+    }
+
+    if ch, ok := result.(*chat.Chat); ok {
+      // ch.Client.Socket.Emit("operator:message", req.Body, func (sock socketio.Socket, data string) {
+      log.Println(DEBUG, "client:", "Sent message", msg)
+      // })
+
+      // db.Put(msg)
+    }
+
     resp.WriteHeader(http.StatusOK)
   }
 }

@@ -62,8 +62,8 @@ func main() {
   socket.On("connection", func (sock socketio.Socket) {
     log.Println(DEBUG, "socket:", fmt.Sprintf("Incoming connection %s", sock.Id()))
 
-    var c *client.Client
-    var o *operator.Operator
+    var cl *client.Client
+    var op *operator.Operator
 
     hasFingerprint := false
     hasCookie := false
@@ -76,29 +76,41 @@ func main() {
     if (hasFingerprint && hasCookie && hasIP) {
 
     } else { // If no, lets create new user
-      c = client.Create(client.Client{
+      cl = client.Create(client.Client{
           Name: "Site Visitor",
-        })
+        }, sock)
 
-      db.Put(c)
+      db.Put(cl)
     }
 
     // Create new chat, assign user
-    chat := chat.Chat{
+    ch := chat.Chat{
       ID: sock.Id(),
-      Client: c,
-      Operator: o,
+      Client: cl,
+      Operator: op,
       CreationTime: time.Now(),
       UpdatedTime: time.Now(),
     }
 
-    db.Put(chat)
+    db.Put(ch)
 
     // Message event
     sock.On("client:message", func (msg string) {
       log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", sock.Id(), msg))
 
-      // Save chat
+      // Create and Save message
+      m := chat.Message{
+        Timestamp: time.Now(),
+        Content: msg,
+        Author: ch.Client,
+        Chat: ch.ID,
+      }
+      db.Put(m)
+
+      // Update and Save chat
+      ch.UpdatedTime = time.Now()
+      db.Put(ch)
+
     })
 
     // Disconnection event
@@ -152,34 +164,34 @@ func main() {
   router.POST("/api/operator/", rest.CreateOrUpdateOperator(db)) // Check
   router.PUT("/api/operator/:id", rest.CreateOrUpdateOperator(db)) // Check
   router.PATCH("/api/operator/:id", rest.CreateOrUpdateOperator(db)) // Check
-  router.DELETE("/api/operator/:id", rest.DeleteOperator(db))
+  router.DELETE("/api/operator/:id", rest.DeleteOperator(db)) // Check
 
   // Clients
   router.GET("/api/clients", rest.ReadClients(db)) // Check
   router.GET("/api/client/:id", rest.ReadClient(db)) // Check
-  router.POST("/api/client", rest.CreateOrUpdateClient(db)) // Check
-  router.POST("/api/client/", rest.CreateOrUpdateClient(db)) // Check
-  router.PUT("/api/client/:id", rest.CreateOrUpdateClient(db)) // Check
-  router.PATCH("/api/client/:id", rest.CreateOrUpdateClient(db)) // Check
-  router.DELETE("/api/client/:id", rest.DeleteClient(db)) // Check
+  router.POST("/api/client", rest.CreateOrUpdateClient(db)) // Not Implement
+  router.POST("/api/client/", rest.CreateOrUpdateClient(db)) // Not Implement
+  router.PUT("/api/client/:id", rest.CreateOrUpdateClient(db)) // Not Implement
+  router.PATCH("/api/client/:id", rest.CreateOrUpdateClient(db)) // Not Implement
+  router.DELETE("/api/client/:id", rest.DeleteClient(db)) // Not Implement
 
   // Chats
   router.GET("/api/chats", rest.ReadChats(db)) // Check
   router.GET("/api/chat/:id", rest.ReadChat(db)) // Check
-  router.POST("/api/chat", rest.CreateOrUpdateChat(db)) // Check
-  router.POST("/api/chat/", rest.CreateOrUpdateChat(db)) // Check
-  router.PUT("/api/chat/:id", rest.CreateOrUpdateChat(db)) // Check
-  router.PATCH("/api/chat/:id", rest.CreateOrUpdateChat(db)) // Check
-  router.DELETE("/api/chat/:id", rest.DeleteChat(db)) // Check
+  router.POST("/api/chat", rest.CreateOrUpdateChat(db)) // Not Implement
+  router.POST("/api/chat/", rest.CreateOrUpdateChat(db)) // Not Implement
+  router.PUT("/api/chat/:id", rest.CreateOrUpdateChat(db)) // Not Implement
+  router.PATCH("/api/chat/:id", rest.CreateOrUpdateChat(db)) // Not Implement
+  router.DELETE("/api/chat/:id", rest.DeleteChat(db)) // Not Implement
 
   // Chat Messages
   router.GET("/api/chat/:id/messages", rest.ReadMessages(db))
-  router.GET("/api/chat/:id/message/:mid", rest.ReadMessage(db))
+  router.GET("/api/chat/:id/message/:mid", rest.ReadMessage(db)) // Not Implement
   router.POST("/api/chat/:id/message", rest.CreateMessage(db)) // Check
   router.POST("/api/chat/:id/message/", rest.CreateMessage(db)) // Check
-  router.PUT("/api/chat/:id/message/:mid", rest.UpdateMessage(db)) // Check
-  router.PATCH("/api/chat/:id/message/:mid", rest.UpdateMessage(db)) // Check
-  router.DELETE("/api/chat/:id/message/:mid", rest.DeleteMessage(db)) // Check
+  router.PUT("/api/chat/:id/message/:mid", rest.UpdateMessage(db)) // Not Implement
+  router.PATCH("/api/chat/:id/message/:mid", rest.UpdateMessage(db)) // Not Implement
+  router.DELETE("/api/chat/:id/message/:mid", rest.DeleteMessage(db)) // Not Implement
 
 
   // Server

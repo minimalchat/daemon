@@ -22,6 +22,11 @@ func (this Operator) String() string {
   return fmt.Sprintf("%s [%s %s]", this.UserName, this.FirstName, this.LastName)
 }
 
+func (this Operator) ID() string {
+  return this.UserName
+}
+
+
 func (this Operator) StoreKey() string {
-  return fmt.Sprintf("operator.%s", this.UserName)
+  return fmt.Sprintf("operator.%s", this.ID())
 }

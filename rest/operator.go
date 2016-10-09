@@ -34,6 +34,8 @@ func ReadOperators (db *store.InMemory) func (resp http.ResponseWriter, req *htt
 
     result["operators"] = operators
 
+    log.Println(DEBUG, "operator:", "Reading operators", fmt.Sprintf("(%d records)", len(operators)))
+
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     resp.WriteHeader(http.StatusOK)
     if err := json.NewEncoder(resp).Encode(result); err != nil {
@@ -47,7 +49,10 @@ func ReadOperators (db *store.InMemory) func (resp http.ResponseWriter, req *htt
 // GET /api/operator/:id
 func ReadOperator (db *store.InMemory) func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
   return func (resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-    op, _ := db.Get(fmt.Sprintf("operator.%s", params.ByName("id")))
+    id := params.ByName("id")
+    op, _ := db.Get(fmt.Sprintf("operator.%s", id))
+
+    log.Println(DEBUG, "operator:", "Reading operator", params.ByName("id"))
 
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     resp.WriteHeader(http.StatusOK)
