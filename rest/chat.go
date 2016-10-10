@@ -126,10 +126,14 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     if ch, ok := result.(chat.Chat); ok {
       log.Println(DEBUG, "operator:", msg.Content)
 
-      ch.Client.Socket.Emit("operator:message", msg.Content, nil)
+      // Fix if missing in Message object
+      if (msg.Chat == "") {
+        msg.Chat = id
+      }
 
-      log.Println(DEBUG, "message:", "Saving message", msg)
       db.Put(msg)
+
+      ch.Client.Socket.Emit("operator:message", msg.Content, nil)
     }
 
     resp.WriteHeader(http.StatusOK)
