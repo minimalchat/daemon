@@ -74,6 +74,8 @@ func CreateOrUpdateOperator (db *store.InMemory) func (resp http.ResponseWriter,
 
     if err := decoder.Decode(&op); err != nil {
         resp.WriteHeader(http.StatusBadRequest)
+
+        fmt.Fprintf(resp, "Bad Request")
         return
     }
 
@@ -90,6 +92,8 @@ func CreateOrUpdateOperator (db *store.InMemory) func (resp http.ResponseWriter,
 
       if (result == nil) {
         resp.WriteHeader(http.StatusNotFound)
+
+        fmt.Fprintf(resp, "Not Found")
         return
       }
 
@@ -125,6 +129,8 @@ func DeleteOperator (db *store.InMemory) func (resp http.ResponseWriter, req *ht
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
     if err != nil {
         resp.WriteHeader(http.StatusBadRequest)
+
+        fmt.Fprintf(resp, "Bad Request")
         return
     }
 

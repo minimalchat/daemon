@@ -51,6 +51,8 @@ func ReadChat (db *store.InMemory) func (resp http.ResponseWriter, req *http.Req
       }
     } else {
       resp.WriteHeader(http.StatusNotFound)
+
+      fmt.Fprintf(resp, "Not Found")
     }
   }
 }
@@ -106,12 +108,16 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     if err := decoder.Decode(&msg); err != nil {
       log.Println(DEBUG, "message:", "Bad Request", err)
       resp.WriteHeader(http.StatusBadRequest)
+
+      fmt.Fprintf(resp, "Bad Request")
       return
     }
 
     if (id == "") {
       log.Println(DEBUG, "message:", "Bad Request ID", id)
       resp.WriteHeader(http.StatusBadRequest)
+
+      fmt.Fprintf(resp, "Bad Request")
       return
     }
 
@@ -120,6 +126,8 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     if (result == nil) {
       log.Println(DEBUG, "message:", "Unknown Chat ID", id, result)
       resp.WriteHeader(http.StatusNotFound)
+
+      fmt.Fprintf(resp, "Not Found")
       return
     }
 
