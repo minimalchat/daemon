@@ -10,6 +10,7 @@ import (
 
   "github.com/julienschmidt/httprouter" // Http router
   "github.com/googollee/go-socket.io" // Socket
+
   // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
   "github.com/mihok/letschat-daemon/rest"
@@ -102,7 +103,7 @@ func main() {
       m := chat.Message{
         Timestamp: time.Now(),
         Content: msg,
-        Author: ch.Client,
+        Author: ch.Client.StoreKey(),
         Chat: ch.ID,
       }
       db.Put(m)

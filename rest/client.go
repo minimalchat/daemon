@@ -6,7 +6,7 @@ import (
   "net/http"
   "encoding/json"
 
-  "github.com/julienschmidt/httprouter"
+  "github.com/julienschmidt/httprouter" // Router
 
   "github.com/mihok/letschat-daemon/store"
 )

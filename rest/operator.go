@@ -7,7 +7,7 @@ import (
   "net/http"
   "encoding/json"
 
-  "github.com/julienschmidt/httprouter"
+  "github.com/julienschmidt/httprouter" // Router
 
   "github.com/mihok/letschat-daemon/operator"
   "github.com/mihok/letschat-daemon/store"
@@ -93,7 +93,7 @@ func CreateOrUpdateOperator (db *store.InMemory) func (resp http.ResponseWriter,
         return
       }
 
-      if old, ok := result.(*operator.Operator); ok {
+      if old, ok := result.(operator.Operator); ok {
 
         // Update fields of old record
         if (op.FirstName != "") {

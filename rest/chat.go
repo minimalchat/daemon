@@ -7,7 +7,6 @@ import (
   "encoding/json"
 
   "github.com/julienschmidt/httprouter"
-  "github.com/googollee/go-socket.io" // Socket
 
   "github.com/mihok/letschat-daemon/store"
   "github.com/mihok/letschat-daemon/chat"
@@ -111,7 +110,7 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     }
 
     if (id == "") {
-      log.Println(DEBUG, "message:", "Bad Request ID")
+      log.Println(DEBUG, "message:", "Bad Request ID", id)
       resp.WriteHeader(http.StatusBadRequest)
       return
     }
@@ -119,16 +118,18 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     result, _ := db.Get(fmt.Sprintf("chat.%s", id))
 
     if (result == nil) {
+      log.Println(DEBUG, "message:", "Unknown Chat ID", id, result)
       resp.WriteHeader(http.StatusNotFound)
       return
     }
 
-    if ch, ok := result.(*chat.Chat); ok {
-      // ch.Client.Socket.Emit("operator:message", req.Body, func (sock socketio.Socket, data string) {
-      log.Println(DEBUG, "client:", "Sent message", msg)
-      // })
+    if ch, ok := result.(chat.Chat); ok {
+      log.Println(DEBUG, "operator:", msg.Content)
 
-      // db.Put(msg)
+      ch.Client.Socket.Emit("operator:message", msg.Content, nil)
+
+      log.Println(DEBUG, "message:", "Saving message", msg)
+      db.Put(msg)
     }
 
     resp.WriteHeader(http.StatusOK)
