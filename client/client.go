@@ -16,7 +16,7 @@ type Client struct {
   person.Person
   Name string `json:"name"`
   Uuid string `json:"id"`
-  Socket socketio.Socket `json:"omitempty"`
+  Socket socketio.Socket `json:"socket"`
 }
 
 func Create(client Client, sock socketio.Socket) *Client {

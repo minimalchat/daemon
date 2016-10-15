@@ -186,7 +186,7 @@ func main() {
   router.DELETE("/api/chat/:id", rest.DeleteChat(db)) // Not Implement
 
   // Chat Messages
-  router.GET("/api/chat/:id/messages", rest.ReadMessages(db))
+  router.GET("/api/chat/:id/messages", rest.ReadMessages(db)) // Check
   router.GET("/api/chat/:id/message/:mid", rest.ReadMessage(db)) // Not Implement
   router.POST("/api/chat/:id/message", rest.CreateMessage(db)) // Check
   router.POST("/api/chat/:id/message/", rest.CreateMessage(db)) // Check

@@ -1,10 +1,6 @@
 # Commands
-GOCMD = /usr/bin/go
-
+GO_CMD = /usr/bin/go
 LINT_CMD = $(GOPATH)/bin/golint
-TEST_CMD = $(GOCMD) test
-COMPILE_CMD = $(GOCMD) build
-RUN_CMD = $(GOCMD) run
 
 # Directories
 PACKAGE = github.com/mihok/letschat-daemon
@@ -23,7 +19,7 @@ lint:
 
 test:
 	cd $(SRC)
-	$(TEST_CMD)
+	$(GO_CMD) test
 
 clean:
 	rm -rf $(DIST)/letschat-daemon
@@ -31,8 +27,8 @@ clean:
 compile:
 	mkdir -p $(DIST)
 	cd $(SRC)
-	$(COMPILE_CMD) -o $(DIST)/letschat
+	$(GO_CMD) build -o $(DIST)/letschat
 
 go:
 	cd $(SRC)
-	$(RUN_CMD) main.go
+	$(GO_CMD) run main.go
