@@ -45,8 +45,8 @@ What database should be used? Is in-memory good enough?
 
 ## Steps to implement
 
-1. Setup websocket server side (B)
-2. Connect rudimentary client side to test server side (A)
+1. ~~Setup websocket server side (B)~~
+2. ~~Connect rudimentary client side to test server side (A)~~
 3. Build out saving messages/chats/clients (C)
 4. Create initial operator transport \[laptop\] (D)
 5. Refresh rudimentary client side with production level implementation (A)
