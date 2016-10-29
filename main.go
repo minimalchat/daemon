@@ -21,6 +21,16 @@ import (
   // "github.com/mihok/lets-chat/person"
  )
 
+ // Log levels
+ const (
+   DEBUG string = "DEBUG"
+   INFO string = "INFO"
+   WARNING string = "WARN"
+   ERROR string = "ERROR"
+   FATAL string = "FATAL"
+ )
+
+
 // Configuration object
 type configuration struct {
   Protocol string
@@ -29,25 +39,18 @@ type configuration struct {
   Host string
 }
 
-// Log levels
-const (
-  DEBUG string = "DEBUG"
-  INFO string = "INFO"
-  WARNING string = "WARN"
-  ERROR string = "ERROR"
-  FATAL string = "FATAL"
-)
+var config configuration
 
+func init() {
+    // Configuration
+    flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
+    flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
+}
 
 func main() {
-
   // Configuration
-  var config configuration
-
-  flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
-  flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
   flag.Parse()
-
+  
   config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
 
   db := new(store.InMemory)
