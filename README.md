@@ -1,5 +1,6 @@
 # Let's Chat daemon
 
+[![GoDoc](https://godoc.org/github.com/mihok/letschat-daemon?status.svg)](https://godoc.org/github.com/mihok/letschat-daemon)
 [![Build Status](https://travis-ci.org/mihok/letschat-daemon.svg?branch=master)](https://travis-ci.org/mihok/letschat-daemon)
 [![Coverage Status](https://coveralls.io/repos/github/mihok/letschat-daemon/badge.svg?branch=master)](https://coveralls.io/github/mihok/letschat-daemon?branch=master)
 
