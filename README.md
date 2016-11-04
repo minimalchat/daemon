@@ -1,61 +1,42 @@
-# Let's Chat
+# Let's Chat daemon
 
-Tired of crap or expensive live chat platforms, this aims to be the API daemon service for an open source live chat implementation.
+[![Build Status](https://travis-ci.org/mihok/letschat-daemon.svg?branch=master)](https://travis-ci.org/mihok/letschat-daemon)
+[![Coverage Status](https://coveralls.io/repos/github/mihok/letschat-daemon/badge.svg?branch=master)](https://coveralls.io/github/mihok/letschat-daemon?branch=master)
 
-Lets keep it simple.
+---
 
-## We want to provide:
+Let's Chat is an open source live chat system providing live one on one messaging to a website visitor and an operator.
 
- - Websocket endpoint to pass messages from client browser to server
- - Transport messages from server to some chat operator service
-  (irc, facebook, sms, ?)
- - Save messages and clients (tagging, classifying, pages they are visiting) in a manor that allows clients to be ephemeral.
+Let's Chat is:
+-   **minimal**: simple, lightweight, accessible
+-   **extensible**: modular, pluggable, hookable, composable
 
-## We can break these down into smaller more abstract bits:
+---
 
-### Front-end
+Let's Chat daemon is the central server providing API endpoints for operator extensions like Slack, IRC, etc. It also provides the socket.io endpoints that the web clients connect to when on a Let's Chat enabled website.
 
-A. Client browser script
-  - Show user chat onscreen, without degrading user experience
-  - Allow feedback of chat/operator
+### Installation
 
-### Back-end
+Download the prebuilt binaries available in the [releases]() section or clone the repo and build using Go `>=1.6`.
 
-B. Client-server communication (Websockets)
-  - Receive/Deliver events (messages)
+```
+> curl -L https://github.com/mihok/letschat-daemon/releases/download/v1.0.0/letschat.tar.gz
+> tar -zxvf letschat.tar.gz
+> cd letschat/bin
+> letschat -host 0.0.0.0 -port 8080
+```
 
-C. Server database operations (Create/read/update/delete)
-  - Keep record of chats for resumption
-  - Keep record of clients and chats for analysis
-  - Keep record of operator tagging
+### Usage
 
-D. Server-operator communication
-  - Interpret actions (Tag, messages)
-  - Operation communication (IRC, facebook, sms, phone/mobile app, bot)
+```
+> letschat-daemon
+letschat-daemon runs the socket and API daemon
 
+Find more information at https://github.com/mihok/letschat-daemon
 
-## Questions that need to be answered to move forward
-
-How do websockets work on the Browser? Can we use socket.io?
-
-How do websockets work with Go.
-
-What database should be used? Is in-memory good enough?
-
-
-## Steps to implement
-
-1. ~~Setup websocket server side (B)~~
-2. ~~Connect rudimentary client side to test server side (A)~~
-3. Build out saving messages/chats/clients (C)
-4. Create initial operator transport \[laptop\] (D)
-5. Refresh rudimentary client side with production level implementation (A)
-6. Beta test
-7. Fix bugs
-8. Build out secondary operator transport \[non-laptop\] (D)
-
-### Bonus levels
-
-9. Implement multi tenant implementation
-10. Build out marketing and hosted solution
-11. Create payment portal/admin Browser portal
+Flags:
+  -host address
+        The address to which serve socket and API requests on
+  -port number
+        The port number to use in conjunction with the host address
+```
