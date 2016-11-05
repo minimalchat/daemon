@@ -27,7 +27,7 @@ clean:
 compile:
 	mkdir -p $(DIST)
 	cd $(SRC)
-	$(GO_CMD) build -o $(DIST)/letschat
+	$(GO_CMD) build -o $(DIST)/mnml-daemon
 
 go:
 	cd $(SRC)
