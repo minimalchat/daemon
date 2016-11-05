@@ -1,3 +1,8 @@
 language: go
 go:
-  - master
+  - 1.6
+install:
+  - go get github.com/golang/lint/golint
+  - go get github.com/julienschmidt/httprouter
+  - go get github.com/googollee/go-socket.io
+  - go get github.com/wayn3h0/go-uuid
