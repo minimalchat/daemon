@@ -19,8 +19,7 @@ lint:
 
 test:
 	cd $(SRC)
-	$(GO_CMD) test -v -covermode=count -coverprofile=coverage.out
-$HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+	$(GO_CMD) test -v -covermode=count -coverprofile=coverage.out $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
 
 clean:
 	rm -rf $(DIST)/mnml-daemon
