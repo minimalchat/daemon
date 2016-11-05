@@ -1,5 +1,5 @@
 # Commands
-GO_CMD = /usr/bin/go
+GO_CMD = go
 LINT_CMD = $(GOPATH)/bin/golint
 
 # Directories
@@ -22,7 +22,7 @@ test:
 	$(GO_CMD) test
 
 clean:
-	rm -rf $(DIST)/letschat-daemon
+	rm -rf $(DIST)/mnml-daemon
 
 compile:
 	mkdir -p $(DIST)
