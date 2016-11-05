@@ -3,7 +3,7 @@ package operator
 import (
   "fmt"
 
-  "github.com/mihok/letschat-daemon/person"
+  "github.com/minimalchat/mnml-daemon/person"
 )
 
 

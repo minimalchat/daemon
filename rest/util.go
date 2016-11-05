@@ -7,7 +7,7 @@ import (
 
   "github.com/julienschmidt/httprouter"
 
-  // "github.com/mihok/letschat-daemon/store"
+  // "github.com/minimalchat/mnml-daemon/store"
 )
 
 

@@ -4,9 +4,9 @@ import (
   "fmt"
   "time"
 
-  "github.com/mihok/letschat-daemon/operator"
-  "github.com/mihok/letschat-daemon/client"
-  // "github.com/mihok/letschat-daemon/person"
+  "github.com/minimalchat/mnml-daemon/operator"
+  "github.com/minimalchat/mnml-daemon/client"
+  // "github.com/minimalchat/mnml-daemon/person"
 )
 
 type Chat struct {

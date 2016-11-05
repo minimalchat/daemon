@@ -8,8 +8,8 @@ import (
 
   "github.com/julienschmidt/httprouter"
 
-  "github.com/mihok/letschat-daemon/store"
-  "github.com/mihok/letschat-daemon/chat"
+  "github.com/minimalchat/mnml-daemon/store"
+  "github.com/minimalchat/mnml-daemon/chat"
 )
 
 

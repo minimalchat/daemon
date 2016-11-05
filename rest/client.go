@@ -8,7 +8,7 @@ import (
 
   "github.com/julienschmidt/httprouter" // Router
 
-  "github.com/mihok/letschat-daemon/store"
+  "github.com/minimalchat/mnml-daemon/store"
 )
 
 // Clients

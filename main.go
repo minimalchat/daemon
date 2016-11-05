@@ -13,11 +13,11 @@ import (
 
   // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
-  "github.com/mihok/letschat-daemon/rest"
-  "github.com/mihok/letschat-daemon/store"
-  "github.com/mihok/letschat-daemon/operator"
-  "github.com/mihok/letschat-daemon/client"
-  "github.com/mihok/letschat-daemon/chat"
+  "github.com/minimalchat/mnml-daemon/rest"
+  "github.com/minimalchat/mnml-daemon/store"
+  "github.com/minimalchat/mnml-daemon/operator"
+  "github.com/minimalchat/mnml-daemon/client"
+  "github.com/minimalchat/mnml-daemon/chat"
   // "github.com/mihok/lets-chat/person"
  )
 

@@ -6,7 +6,7 @@ import (
   "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
   "github.com/googollee/go-socket.io" // Socket
 
-  "github.com/mihok/letschat-daemon/person"
+  "github.com/minimalchat/mnml-daemon/person"
 )
 
 
