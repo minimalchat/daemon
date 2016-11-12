@@ -9,7 +9,7 @@ DIST = $(GOPATH)/bin
 
 .PHONY: build lint
 
-build: lint test coverage clean compile
+build: lint test clean compile
 
 run: lint test go
 
@@ -19,12 +19,12 @@ lint:
 
 test:
 	cd $(SRC)
-	$(DIST)/overalls -project=$(PACKAGE) -covermode=count
-	# $(GO_CMD) test -v -coverpkg ./... -covermode=count -coverprofile=coverage.out ./...
+	$(GO_CMD) test -v ./...
 	# $(GOPATH)/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
 
 coverage:
 	cd $(SRC)
+	$(DIST)/overalls -project=$(PACKAGE) -covermode=count
 	$(GOPATH)/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci -repotoken $(COVERALLS_TOKEN)
 
 clean:
