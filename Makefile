@@ -7,9 +7,9 @@ PACKAGE = github.com/minimalchat/mnml-daemon
 SRC = $(GOPATH)/src/$(PACKAGE)
 DIST = $(GOPATH)/bin
 
-.PHONY: build lint
+default: lint test coverage clean compile
 
-build: lint test coverage clean compile
+build: lint test clean compile
 
 run: lint test go
 
