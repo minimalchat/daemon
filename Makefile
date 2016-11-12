@@ -9,7 +9,7 @@ DIST = $(GOPATH)/bin
 
 .PHONY: build lint
 
-build: lint test clean compile
+build: lint test coverage clean compile
 
 run: lint test go
 
@@ -19,8 +19,13 @@ lint:
 
 test:
 	cd $(SRC)
-	$(GO_CMD) test -v -covermode=count -coverprofile=coverage.out
-	$(GOPATH)/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+	$(DIST)/overalls -project=$(PACKAGE) -covermode=count
+	# $(GO_CMD) test -v -coverpkg ./... -covermode=count -coverprofile=coverage.out ./...
+	# $(GOPATH)/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+
+coverage:
+	cd $(SRC)
+	$(GOPATH)/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci -repotoken $(COVERALLS_TOKEN)
 
 clean:
 	rm -rf $(DIST)/mnml-daemon
