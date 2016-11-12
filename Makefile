@@ -9,7 +9,7 @@ DIST = $(GOPATH)/bin
 
 .PHONY: build lint
 
-build: lint test clean compile
+build: lint test coverage clean compile
 
 run: lint test go
 
