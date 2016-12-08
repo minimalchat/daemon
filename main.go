@@ -40,17 +40,32 @@ type configuration struct {
 }
 
 var config configuration
+var needHelp bool
+
+func help() {
+  fmt.Println("mnml-daemon live chat API daemon\n")
+  fmt.Println("Find more information at https://github.com/minimalchat/mnml-daemon\n")
+
+  fmt.Println("Flags:")
+  flag.PrintDefaults()
+}
 
 func init() {
     // Configuration
     flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
     flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
+    flag.BoolVar(&needHelp, "h", false, "Get help")
 }
 
 func main() {
   // Configuration
   flag.Parse()
-  
+
+  if (needHelp) {
+    help();
+    return;
+  }
+
   config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
 
   db := new(store.InMemory)
