@@ -14,9 +14,9 @@ func TestPerson(t *testing.T) {
       result := bob.String()
 
       if (result != "Bob Bobberson") {
-        t.Error("Expected 1.5, got ", result);
+        t.Error("Expected 'Bob Bobberson', got ", result);
       }
     })
-    
+
     // <tear-down code>
 }

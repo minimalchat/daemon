@@ -13,6 +13,9 @@ build: lint test clean compile
 
 run: lint test go
 
+dependencies:
+	cat $(SRC)/requirements.txt | xargs -I \\# go get -u github.com/\\#
+
 lint:
 	$(LINT_CMD) $(SRC)
 	# $(LINT_CMD) $(SRC) $(TEST)
