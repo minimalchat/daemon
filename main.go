@@ -107,6 +107,7 @@ func main() {
       ID: sock.Id(),
       Client: cl,
       Operator: op,
+      Open: true,
       CreationTime: time.Now(),
       UpdatedTime: time.Now(),
     }
