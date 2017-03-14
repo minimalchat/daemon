@@ -15,6 +15,7 @@ type Chat struct {
   Operator *operator.Operator `json:"operator"`
   CreationTime time.Time `json:"creation_time"`
   UpdatedTime time.Time `json:"update_time"`
+  Open bool `json:"open"`
 }
 
 func (this *Chat) String() string {
