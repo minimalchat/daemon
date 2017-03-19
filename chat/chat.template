@@ -1,0 +1,8 @@
+{
+  "client": $CLIENT,
+  "operator": $OPERATOR,
+  "id": "$ID",
+  "creation_time": "$CREATION_TIME",
+  "update_time": "$UPDATE_TIME",
+  "open": $OPEN
+}
