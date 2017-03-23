@@ -26,3 +26,5 @@ _testmain.go
 # Coveralls coverage output
 coverage.out
 *.coverprofile
+
+.DS_Store
