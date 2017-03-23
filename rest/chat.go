@@ -6,6 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/minimalchat/mnml-daemon/chat"
 	"github.com/minimalchat/mnml-daemon/store"
+	"github.com/minimalchat/mnml-daemon/utils"
 	"log"
 	"net/http"
 )
@@ -71,7 +72,8 @@ func ReadMessages(db *store.InMemory) func(resp http.ResponseWriter, req *http.R
 		messages, _ := db.Search(fmt.Sprintf("message.%s-", params.ByName("id")))
 		result := make(map[string]interface{})
 
-		result["messages"] = messages
+		// result["messages"] = messages
+		result["messages"] = utils.MakeDummy(20)
 
 		log.Println(DEBUG, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
 
