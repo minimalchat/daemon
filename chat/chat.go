@@ -4,13 +4,15 @@ import (
   "fmt"
   "time"
 
+  "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+
   "github.com/minimalchat/mnml-daemon/operator"
   "github.com/minimalchat/mnml-daemon/client"
   // "github.com/minimalchat/mnml-daemon/person"
 )
 
 type Chat struct {
-  ID string `json:"id"`
+  Uid string `json:"id"`
   Client *client.Client `json:"client"`
   Operator *operator.Operator `json:"operator"`
   CreationTime time.Time `json:"creation_time"`
@@ -18,13 +20,22 @@ type Chat struct {
   Open bool `json:"open"`
 }
 
+func Create(chat Chat) *Chat {
+  if (chat.Uid == "") {
+    uuid, _ := uuid.NewRandom()
+    chat.Uid = uuid.String()
+  }
+
+  return &chat
+}
+
 func (this *Chat) String() string {
   // return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
-  return this.ID
+  return this.Uid
 }
 
 func (this Chat) StoreKey() string {
-  return fmt.Sprintf("chat.%s", this.ID)
+  return fmt.Sprintf("chat.%s", this.Uid)
 }
 
 

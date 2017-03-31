@@ -3,22 +3,20 @@ package main
 import (
   "log"
   "fmt"
-
   "flag"
-  "time"
   "net/http"
 
   "github.com/julienschmidt/httprouter" // Http router
-  "github.com/googollee/go-socket.io" // Socket
+  // "github.com/googollee/go-socket.io" // Socket
 
   // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
   "github.com/minimalchat/mnml-daemon/rest"
+  "github.com/minimalchat/mnml-daemon/socket"
   "github.com/minimalchat/mnml-daemon/store"
-  "github.com/minimalchat/mnml-daemon/operator"
-  "github.com/minimalchat/mnml-daemon/client"
-  "github.com/minimalchat/mnml-daemon/chat"
-  // "github.com/mihok/lets-chat/person"
+  // "github.com/minimalchat/mnml-daemon/operator"
+  // "github.com/minimalchat/mnml-daemon/client"
+  // "github.com/minimalchat/mnml-daemon/chat"
  )
 
  // Log levels
@@ -71,79 +69,88 @@ func main() {
   db := new(store.InMemory)
 
   // Socket.io
-  socket, err := socketio.NewServer(nil)
+  socket := socket.Listen(db)
 
-  if err != nil {
-      log.Fatal(err)
-  }
+  // if err != nil {
+  //     log.Fatal(err)
+  // }
 
   // Socket.io - Connection event
-  socket.On("connection", func (sock socketio.Socket) {
-    log.Println(DEBUG, "socket:", fmt.Sprintf("Incoming connection %s", sock.Id()))
-
-    var cl *client.Client
-    var op *operator.Operator
-
-    hasFingerprint := false
-    hasCookie := false
-    hasIP := false
-    // Does this user match a previous fingerprint ?
-    //  Does user have cookie?
-    //  Does user have known IP?
-
-    // If yes, lets get/update the user
-    if (hasFingerprint && hasCookie && hasIP) {
-
-    } else { // If no, lets create new user
-      cl = client.Create(client.Client{
-          Name: "Site Visitor",
-        }, sock)
-
-      db.Put(cl)
-    }
-
-    // Create new chat, assign user
-    ch := chat.Chat{
-      ID: sock.Id(),
-      Client: cl,
-      Operator: op,
-      Open: true,
-      CreationTime: time.Now(),
-      UpdatedTime: time.Now(),
-    }
-
-    db.Put(ch)
-
-    // Message event
-    sock.On("client:message", func (msg string) {
-      log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", sock.Id(), msg))
-
-      // Create and Save message
-      m := chat.Message{
-        Timestamp: time.Now(),
-        Content: msg,
-        Author: ch.Client.StoreKey(),
-        Chat: ch.ID,
-      }
-      db.Put(m)
-
-      // Update and Save chat
-      ch.UpdatedTime = time.Now()
-      db.Put(ch)
-
-    })
-
-    // Disconnection event
-    sock.On("disconnection", func () {
-      log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
-
-      // Save chat
-    })
-  })
-
-  socket.On("error", func (so socketio.Socket, err error) {
-      log.Println(ERROR, "socket:", err)
-  })
+  // socket.On("connection", func (sock socketio.Socket) {
+  //   log.Println(DEBUG, "socket:", fmt.Sprintf("Incoming connection %s %s", sock.Id(), sock.Request().URL.Query().Get("type")))
+  //
+  //   var cl *client.Client
+  //   var op *operator.Operator
+  //   t := sock.Request().URL.Query().Get("type")
+  //
+  //   if (t === "operator") {
+  //     log.Println(DEBUG, "socket: OPERATOR!!")
+  //   } else if (t === "client") {
+  //
+  //     hasFingerprint := false
+  //     hasCookie := false
+  //     hasIP := false
+  //     // Does this user match a previous fingerprint ?
+  //     //  Does user have cookie?
+  //     //  Does user have known IP?
+  //
+  //     // If yes, lets get/update the user
+  //     if (hasFingerprint && hasCookie && hasIP) {
+  //
+  //     } else { // If no, lets create new user
+  //       cl = client.Create(client.Client{
+  //           Name: "Site Visitor",
+  //         }, sock)
+  //
+  //       db.Put(cl)
+  //     }
+  //
+  //     // Create new chat, assign user
+  //     ch := chat.Chat{
+  //       ID: sock.Id(),
+  //       Client: cl,
+  //       Operator: op,
+  //       Open: true,
+  //       CreationTime: time.Now(),
+  //       UpdatedTime: time.Now(),
+  //     }
+  //
+  //     db.Put(ch)
+  //   } else {
+  //     log.Println(ERROR, "unable to find connection type.")
+  //   }
+  //
+  //
+  //   // Message event
+  //   sock.On("client:message", func (msg string) {
+  //     log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", sock.Id(), msg, sock.Request().Header))
+  //
+  //     // Create and Save message
+  //     m := chat.Message{
+  //       Timestamp: time.Now(),
+  //       Content: msg,
+  //       Author: ch.Client.StoreKey(),
+  //       Chat: ch.ID,
+  //     }
+  //     db.Put(m)
+  //
+  //     // Update and Save chat
+  //     ch.UpdatedTime = time.Now()
+  //     db.Put(ch)
+  //
+  //   })
+  //
+  //   // Disconnection event
+  //   sock.On("disconnection", func () {
+  //     log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
+  //
+  //     // Save chat
+  //   })
+  // })
+  //
+  // socket.On("error", func (so socketio.Socket, err error) {
+  //     log.Println(ERROR, "socket:", err)
+  // })
 
   router := httprouter.New()
 
@@ -169,6 +176,7 @@ func main() {
   router.HandlerFunc("GET", "/socket.io/", func (resp http.ResponseWriter, req *http.Request) {
     resp.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
     resp.Header().Set("Access-Control-Allow-Credentials", "true")
+    // resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
 
     socket.ServeHTTP(resp, req)
   })
@@ -215,6 +223,6 @@ func main() {
 
 
   // Server
-  log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))
+  log.Println(INFO, "server:", fmt.Sprintf("Listening for HTTP Requests on %s ...", config.Host))
   log.Fatal(http.ListenAndServe(config.Host, router))
 }

@@ -2,8 +2,19 @@
 package store
 
 import (
+  "fmt"
+  "log"
   "sync"
   "strings"
+)
+
+// Log levels
+const (
+  DEBUG string = "DEBUG"
+  INFO string = "INFO"
+  WARNING string = "WARN"
+  ERROR string = "ERROR"
+  FATAL string = "FATAL"
 )
 
 // StoreKeyer is an object that can be kept in an InMemory store
@@ -26,6 +37,8 @@ func (db *InMemory) Put(v StoreKeyer) error {
     db.data = make(map[string]StoreKeyer)
   }
 
+  log.Println(DEBUG, "store:", fmt.Sprintf("Storing %s ...", v.StoreKey()))
+
   db.data[v.StoreKey()] = v
   return nil
 }
@@ -34,6 +47,8 @@ func (db *InMemory) Put(v StoreKeyer) error {
 func (db *InMemory) Get(k string) (StoreKeyer, error) {
   db.RLock()
   defer db.RUnlock()
+
+  log.Println(DEBUG, "store:", fmt.Sprintf("Getting %s ...", k))
 
   return db.data[k], nil
 }
@@ -47,6 +62,8 @@ func (db *InMemory) Remove(k string) error {
     db.data = make(map[string]StoreKeyer)
   }
 
+  log.Println(DEBUG, "store:", fmt.Sprintf("Deleting %s ...", k))
+
   delete(db.data, k)
   return nil
 }
@@ -54,6 +71,8 @@ func (db *InMemory) Remove(k string) error {
 // Search on keys
 func (db *InMemory) Search(q string) ([]StoreKeyer, error) {
   var result []StoreKeyer
+
+  log.Println(DEBUG, "store:", fmt.Sprintf("Searching for %s ...", q))
 
   for key, _:= range db.data {
     if (strings.Contains(key, q)) {

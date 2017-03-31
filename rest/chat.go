@@ -106,7 +106,7 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
     if err := decoder.Decode(&msg); err != nil {
-      log.Println(DEBUG, "message:", "Bad Request", err)
+      log.Println(ERROR, "message:", "Bad Request", err)
       resp.WriteHeader(http.StatusBadRequest)
 
       fmt.Fprintf(resp, "Bad Request")
@@ -114,7 +114,7 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
     }
 
     if (id == "") {
-      log.Println(DEBUG, "message:", "Bad Request ID", id)
+      log.Println(ERROR, "message:", "Bad Request ID", id)
       resp.WriteHeader(http.StatusBadRequest)
 
       fmt.Fprintf(resp, "Bad Request")
@@ -142,6 +142,12 @@ func CreateMessage (db *store.InMemory) func (resp http.ResponseWriter, req *htt
       db.Put(msg)
 
       ch.Client.Socket.Emit("operator:message", msg.Content, nil)
+    } else {
+      log.Println(ERROR, "message:", "Could not cast store data to struct", ok, result.(chat.Chat))
+      resp.WriteHeader(http.StatusInternalServerError)
+
+      fmt.Fprintf(resp, "Bad Request")
+      return
     }
 
     resp.WriteHeader(http.StatusOK)

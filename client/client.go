@@ -3,7 +3,7 @@ package client
 import (
   "fmt"
 
-  "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+  // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
   "github.com/googollee/go-socket.io" // Socket
 
   "github.com/minimalchat/mnml-daemon/person"
@@ -15,14 +15,14 @@ import (
 type Client struct {
   person.Person
   Name string `json:"name"`
-  Uuid string `json:"id"`
+  Uid string `json:"id"`
   Socket socketio.Socket `json:"socket"`
 }
 
 func Create(client Client, sock socketio.Socket) *Client {
-  if (client.Uuid == "") {
-    uuid, _ := uuid.NewRandom()
-    client.Uuid = uuid.String()
+  if (client.Uid == "") {
+    // uuid, _ := uuid.NewRandom()
+    client.Uid = sock.Id()
   }
 
   client.Socket = sock
@@ -42,7 +42,7 @@ func (this Client) String() string {
 }
 
 func (this Client) ID() string {
-  return this.Uuid
+  return this.Uid
 }
 
 

@@ -3,6 +3,9 @@ package operator
 import (
   "fmt"
 
+  // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+  "github.com/googollee/go-socket.io" // Socket
+
   "github.com/minimalchat/mnml-daemon/person"
 )
 
@@ -12,9 +15,18 @@ import (
 type Operator struct {
   person.Person
   UserName string `json:"username"`
+  Uid string `json:"id"`
+  Socket socketio.Socket `json:"socket"`
 }
 
-func Create(operator Operator) *Operator {
+func Create(operator Operator, sock socketio.Socket) *Operator {
+  if (operator.Uid == "") {
+    // uuid, _ := uuid.NewRandom()
+    operator.Uid = sock.Id()
+  }
+
+  operator.Socket = sock
+
   return &operator
 }
 
