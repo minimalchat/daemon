@@ -17,17 +17,11 @@ func MakeDummy(numMessages int) []chat.Message {
 
 	messages := make([]chat.Message, numMessages)
 
-	for i := 0; i <= numMessages; i++ {
-		newMessage := chat.Message{
-			Content:   fake.Paragraph(3, true),
-			Author:    fake.Name(),
-			Chat:      fake.PostCode(),
-			Timestamp: time.Unix(64043302, 23423502),
-		}
-
-		// running into errors here.
-		// messages[i] = newMessage // < this doesn't work
-		messages = append(messages, newMessage) // < works but first half of array is full of junk?
+	for i := 0; i < numMessages; i++ {
+		messages[i].Content = fake.Paragraph(3, true)
+		messages[i].Author = fake.Name()
+		messages[i].Chat = fake.PostCode()
+		messages[i].Timestamp = time.Unix(64042203, 23423502)
 	}
 
 	return messages

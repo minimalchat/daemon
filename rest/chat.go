@@ -69,13 +69,13 @@ func DeleteChat(db *store.InMemory) func(resp http.ResponseWriter, req *http.Req
 // ReadMessages GET /api/chat/:id/messages
 func ReadMessages(db *store.InMemory) func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		messages, _ := db.Search(fmt.Sprintf("message.%s-", params.ByName("id")))
+		// messages, _ := db.Search(fmt.Sprintf("message.%s-", params.ByName("id")))
+		// result["messages"] = messages
 		result := make(map[string]interface{})
 
-		// result["messages"] = messages
 		result["messages"] = utils.MakeDummy(20)
 
-		log.Println(DEBUG, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
+		// log.Println(DEBUG, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
