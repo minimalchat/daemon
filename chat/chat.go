@@ -1,56 +1,45 @@
 package chat
 
 import (
-  "fmt"
-  "time"
+	"fmt"
+	"time"
 
-  "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
-  "github.com/minimalchat/mnml-daemon/operator"
-  "github.com/minimalchat/mnml-daemon/client"
-  // "github.com/minimalchat/mnml-daemon/person"
+	"github.com/minimalchat/mnml-daemon/client"
+	"github.com/minimalchat/mnml-daemon/operator"
+	// "github.com/minimalchat/mnml-daemon/person"
 )
 
+/*
+Chat struct defines communication session */
 type Chat struct {
-  Uid string `json:"id"`
-  Client *client.Client `json:"client"`
-  Operator *operator.Operator `json:"operator"`
-  CreationTime time.Time `json:"creation_time"`
-  UpdatedTime time.Time `json:"update_time"`
-  Open bool `json:"open"`
+	UID          string             `json:"id"`
+	Client       *client.Client     `json:"client"`
+	Operator     *operator.Operator `json:"operator"`
+	CreationTime time.Time          `json:"creation_time"`
+	UpdatedTime  time.Time          `json:"update_time"`
+	Open         bool               `json:"open"`
 }
 
+/*
+Create builds a new `Chat` session*/
 func Create(chat Chat) *Chat {
-  if (chat.Uid == "") {
-    uuid, _ := uuid.NewRandom()
-    chat.Uid = uuid.String()
-  }
+	if chat.UID == "" {
+		uuid, _ := uuid.NewRandom()
+		chat.UID = uuid.String()
+	}
 
-  return &chat
+	return &chat
 }
 
-func (this *Chat) String() string {
-  // return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
-  return this.Uid
+func (c *Chat) String() string {
+	// return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
+	return c.UID
 }
 
-func (this Chat) StoreKey() string {
-  return fmt.Sprintf("chat.%s", this.Uid)
-}
-
-
-type Message struct {
-  Timestamp time.Time `json:"timestamp"`
-  Content string `json:"content"`
-  Author string `json:"author"`
-  Chat string `json:"chat"`
-}
-
-func (this *Message) String() string {
-  // return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
-  return this.Content
-}
-
-func (this Message) StoreKey() string {
-  return fmt.Sprintf("message.%s-%d", this.Chat, this.Timestamp.Unix())
+/*
+StoreKey defines a key for a DataStore to reference this item */
+func (c Chat) StoreKey() string {
+	return fmt.Sprintf("chat.%s", c.UID)
 }

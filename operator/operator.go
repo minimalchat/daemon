@@ -1,44 +1,48 @@
 package operator
 
 import (
-  "fmt"
+	"fmt"
 
-  // "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-  "github.com/googollee/go-socket.io" // Socket
+	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+	"github.com/googollee/go-socket.io" // Socket
 
-  "github.com/minimalchat/mnml-daemon/person"
+	"github.com/minimalchat/mnml-daemon/person"
 )
 
-
-// Operator
-
+/*
+Operator struct defines a site owner */
 type Operator struct {
-  person.Person
-  UserName string `json:"username"`
-  Uid string `json:"id"`
-  Socket socketio.Socket `json:"socket"`
+	person.Person
+	UserName string          `json:"username"`
+	UID      string          `json:"id"`
+	Socket   socketio.Socket `json:"socket"`
 }
 
-func Create(operator Operator, sock socketio.Socket) *Operator {
-  if (operator.Uid == "") {
-    // uuid, _ := uuid.NewRandom()
-    operator.Uid = sock.Id()
-  }
+/*
+Create builds a new `Operator` */
+func Create(o Operator, sock socketio.Socket) *Operator {
+	if o.UID == "" {
+		// uuid, _ := uuid.NewRandom()
+		o.UID = sock.Id()
+	}
 
-  operator.Socket = sock
+	o.Socket = sock
 
-  return &operator
+	return &o
 }
 
-func (this Operator) String() string {
-  return fmt.Sprintf("%s [%s %s]", this.UserName, this.FirstName, this.LastName)
+func (o Operator) String() string {
+	return fmt.Sprintf("%s [%s %s]", o.UserName, o.FirstName, o.LastName)
 }
 
-func (this Operator) ID() string {
-  return this.UserName
-}
+// func (this Operator) ID() string {
+// 	return this.UserName
+// }
 
-
-func (this Operator) StoreKey() string {
-  return fmt.Sprintf("operator.%s", this.ID())
+/*
+StoreKey defines a key for a DataStore to reference this item */
+func (o Operator) StoreKey() string {
+	return fmt.Sprintf("operator.%s", o.UserName)
+	/*
+	   StoreKey defines a key for a DataStore to reference this item */
 }
