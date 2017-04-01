@@ -39,7 +39,7 @@ type Server struct {
 Listen creates a new Server instance and begins listening for ws://
 connections. */
 func Listen(ds *store.InMemory) (*Server, error) {
-	log.Println(DEBUG, "socket:", "Listening for WebSocket clients ...")
+	log.Println(DEBUG, "socket:", "Starting WebSocket server ...")
 
 	srv, err := socketio.NewServer(nil)
 	sck := Server{
@@ -135,7 +135,7 @@ func (s Server) onClientConnection(ds *store.InMemory, sock socketio.Socket) {
 
 func (s Server) onConnection(ds *store.InMemory) func(sock socketio.Socket) {
 	return func(sock socketio.Socket) {
-		log.Println(DEBUG, "socket:", fmt.Sprintf("Incoming connection %s %s", sock.Id(), sock.Request().URL.Query().Get("type")))
+		log.Println(INFO, "socket:", fmt.Sprintf("Incoming connection %s %s", sock.Id(), sock.Request().URL.Query().Get("type")))
 
 		t := sock.Request().URL.Query().Get("type")
 

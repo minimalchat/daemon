@@ -53,7 +53,7 @@ func readOperators(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 
 		result["operators"] = operators
 
-		log.Println(DEBUG, "operator:", "Reading operators", fmt.Sprintf("(%d records)", len(operators)))
+		log.Println(INFO, "operator:", "Reading operators", fmt.Sprintf("(%d records)", len(operators)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)

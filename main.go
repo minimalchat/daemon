@@ -88,7 +88,7 @@ func main() {
 		socket.ServeHTTP(resp, req)
 	})
 
-	log.Println(INFO, "server:", fmt.Sprintf("Listening for HTTP Requests on %s ...", config.Host))
+	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))
 
 	log.Fatal(http.ListenAndServe(config.Host, server.Router))
 }

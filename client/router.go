@@ -62,7 +62,7 @@ func readClients(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Re
 
 		result["clients"] = clients
 
-		log.Println(DEBUG, "client:", "Reading clients", fmt.Sprintf("(%d records)", len(clients)))
+		log.Println(INFO, "client:", "Reading clients", fmt.Sprintf("(%d records)", len(clients)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)

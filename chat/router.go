@@ -79,7 +79,7 @@ func readChats(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Requ
 
 		result["chats"] = chats
 
-		log.Println(DEBUG, "chat:", "Reading chats", fmt.Sprintf("(%d records)", len(chats)))
+		log.Println(INFO, "chat:", "Reading chats", fmt.Sprintf("(%d records)", len(chats)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
@@ -137,7 +137,7 @@ func readMessages(ds *store.InMemory) func(resp http.ResponseWriter, req *http.R
 
 		result["messages"] = messages
 
-		log.Println(DEBUG, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
+		log.Println(INFO, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
