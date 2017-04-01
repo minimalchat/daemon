@@ -13,6 +13,7 @@ import (
 	"github.com/minimalchat/mnml-daemon/chat"
 	"github.com/minimalchat/mnml-daemon/client"
 	"github.com/minimalchat/mnml-daemon/operator"
+	"github.com/minimalchat/mnml-daemon/person"
 	"github.com/minimalchat/mnml-daemon/store" // InMemory store
 )
 
@@ -102,6 +103,10 @@ func (s Server) onClientConnection(ds *store.InMemory, sock socketio.Socket) {
 	// TODO: See if we can "recall" if this is a returning client?
 	s.Clients[sock.Id()] = client.Create(
 		client.Client{
+			Person: person.Person{
+				FirstName: "Site",
+				LastName:  "Visitor",
+			},
 			Name: "Site Visitor",
 		},
 		sock,
