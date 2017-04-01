@@ -135,7 +135,7 @@ func (s Server) onClientConnection(ds *store.InMemory, sock socketio.Socket) {
 
 func (s Server) onConnection(ds *store.InMemory) func(sock socketio.Socket) {
 	return func(sock socketio.Socket) {
-		log.Println(INFO, "socket:", fmt.Sprintf("Incoming connection %s %s", sock.Id(), sock.Request().URL.Query().Get("type")))
+		log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", sock.Request().URL.Query().Get("type"), sock.Id()))
 
 		t := sock.Request().URL.Query().Get("type")
 
