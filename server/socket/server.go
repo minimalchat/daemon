@@ -74,7 +74,7 @@ func (s Server) emitToOperators(event string, data string) {
 
 	// Update Operators of the new messages
 	for _, op := range s.Operators {
-		log.Println(DEBUG, "socket:", fmt.Sprintf(" Sending %s \"%s\" to %s", event, data, op.Socket.Id()))
+		log.Println(DEBUG, "socket:", fmt.Sprintf("Sending %s \"%s\" to %s", event, data, op.Socket.Id()))
 
 		op.Socket.Emit(event, data, nil)
 	}
