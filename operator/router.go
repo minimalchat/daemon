@@ -44,6 +44,7 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 // Operators
 
 /*
+GET /api/operator
 GET /api/operators */
 func readOperators(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {

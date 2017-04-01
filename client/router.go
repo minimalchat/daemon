@@ -41,6 +41,8 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 	router.DELETE("/api/client/:id", deleteClient(ds)) // Not Implement
 }
 
+/*
+notImplemented is a helper function for intentionally unimplemented routes */
 func notImplemented(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	resp.WriteHeader(http.StatusNotImplemented)
@@ -51,6 +53,7 @@ func notImplemented(resp http.ResponseWriter, req *http.Request, params httprout
 // Clients
 
 /*
+GET /api/client
 GET /api/clients */
 func readClients(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {

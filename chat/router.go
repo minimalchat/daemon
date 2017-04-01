@@ -58,6 +58,8 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 
 }
 
+/*
+notImplemented is a helper function for intentionally unimplemented routes */
 func notImplemented(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	resp.WriteHeader(http.StatusNotImplemented)
@@ -68,6 +70,7 @@ func notImplemented(resp http.ResponseWriter, req *http.Request, params httprout
 // Chats
 
 /*
+GET /api/chat
 GET /api/chats */
 func readChats(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -125,6 +128,7 @@ func deleteChat(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Req
 // Chat Messages
 
 /*
+GET /api/chat/:id/message
 GET /api/chat/:id/messages */
 func readMessages(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
