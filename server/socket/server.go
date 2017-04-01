@@ -195,8 +195,13 @@ func (s Server) onClientMessage(ds *store.InMemory, sock socketio.Socket) func(m
 		// Save Message to DB
 		ds.Put(m)
 
+		jsonMessage, _ := json.Marshal(m)
+		var buffer bytes.Buffer
+		buffer.Write(jsonMessage)
+		buffer.WriteString("\n")
+
 		// Update Operators of the new messages
-		s.emitToOperators("client:message", msg)
+		s.emitToOperators("client:message", buffer.String())
 	}
 }
 
