@@ -26,6 +26,7 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 
 	// Operator
 	router.GET("/api/operators", readOperators(ds)) // Check
+	router.GET("/api/operator", readOperators(ds))
 
 	router.GET("/api/operator/:id", readOperator(ds)) // Check
 

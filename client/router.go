@@ -26,6 +26,7 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 
 	// Client
 	router.GET("/api/clients", readClients(ds)) // Check
+	router.GET("/api/client", readClients(ds))
 
 	router.GET("/api/client/:id", readClients(ds)) // Check
 

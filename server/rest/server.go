@@ -30,12 +30,12 @@ type Server struct {
 /*
 Listen starts listening on `port` and `host` */
 func Listen(host string, port int, ds *store.InMemory) *Server {
-	srv := Server{
+	s := Server{
 		Router: httprouter.New(),
 	}
 
 	// 404
-	srv.Router.NotFound = http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+	s.Router.NotFound = http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 		resp.WriteHeader(http.StatusNotFound)
 
@@ -43,27 +43,35 @@ func Listen(host string, port int, ds *store.InMemory) *Server {
 	})
 
 	// 405
-	srv.Router.HandleMethodNotAllowed = true
-	srv.Router.MethodNotAllowed = http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+	s.Router.HandleMethodNotAllowed = true
+	s.Router.MethodNotAllowed = http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 		resp.WriteHeader(http.StatusMethodNotAllowed)
 
 		fmt.Fprintf(resp, "Method Not Allowed")
 	})
 
-	srv.Router.GET("/api", defaultRoute)
-	srv.Router.GET("/api/", defaultRoute)
+	s.Router.GET("/", defaultRedirectRoute)
+	s.Router.GET("/api", defaultRedirectRoute)
+	s.Router.GET("/api/", defaultRoute)
 
 	// Operators
-	operator.Routes(srv.Router, ds)
+	operator.Routes(s.Router, ds)
 
 	// Clients
-	client.Routes(srv.Router, ds)
+	client.Routes(s.Router, ds)
 
 	// Chats
-	chat.Routes(srv.Router, ds)
+	chat.Routes(s.Router, ds)
 
-	return &srv
+	return &s
+}
+
+// GET /
+func defaultRedirectRoute(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	// resp.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	// resp.WriteHeader(http.StatusMovedPermanently)
+	http.Redirect(resp, req, "/api/", http.StatusMovedPermanently)
 }
 
 // GET /api/

@@ -26,6 +26,7 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 
 	// Chat
 	router.GET("/api/chats", readChats(ds)) // Check
+	router.GET("/api/chat", readChats(ds))
 
 	router.GET("/api/chat/:id", readChat(ds)) // Check
 
@@ -41,6 +42,7 @@ func Routes(router *httprouter.Router, ds *store.InMemory) {
 
 	// Chat Messages
 	router.GET("/api/chat/:id/messages", readMessages(ds)) // Check
+	router.GET("/api/chat/:id/message", readMessages(ds))
 
 	router.GET("/api/chat/:id/message/:mid", readMessage(ds)) // Not Implement
 
