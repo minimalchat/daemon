@@ -1,33 +1,34 @@
 package client
 
 import (
-  "fmt"
+	"fmt"
 
-  "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-  "github.com/googollee/go-socket.io" // Socket
+	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+	"github.com/googollee/go-socket.io" // Socket
 
-  "github.com/minimalchat/mnml-daemon/person"
+	"github.com/minimalchat/mnml-daemon/person"
 )
 
-
-// Operator
-
+/*
+Client struct defines a web visitor */
 type Client struct {
-  person.Person
-  Name string `json:"name"`
-  Uuid string `json:"id"`
-  Socket socketio.Socket `json:"socket"`
+	person.Person
+	Name   string          `json:"name"`
+	UID    string          `json:"id"`
+	Socket socketio.Socket `json:"socket"`
 }
 
-func Create(client Client, sock socketio.Socket) *Client {
-  if (client.Uuid == "") {
-    uuid, _ := uuid.NewRandom()
-    client.Uuid = uuid.String()
-  }
+/*
+Create builds a new `Client` */
+func Create(c Client, sock socketio.Socket) *Client {
+	if c.UID == "" {
+		// uuid, _ := uuid.NewRandom()
+		c.UID = sock.Id()
+	}
 
-  client.Socket = sock
+	c.Socket = sock
 
-  return &client
+	return &c
 }
 
 // func (this *Client) Send(msg chat.Message) error {
@@ -37,15 +38,16 @@ func Create(client Client, sock socketio.Socket) *Client {
 //   return nil
 // }
 
-func (this Client) String() string {
-  return fmt.Sprintf("%s [%s]", this.Name, this.Name)
+func (c Client) String() string {
+	return fmt.Sprintf("%s [%s]", c.Name, c.Name)
 }
 
-func (this Client) ID() string {
-  return this.Uuid
-}
+// func (this Client) ID() string {
+//  return this.UID
+// }
 
-
-func (this Client) StoreKey() string {
-  return fmt.Sprintf("client.%s", this.ID())
+/*
+StoreKey defines a key for a DataStore to reference this item */
+func (c Client) StoreKey() string {
+	return fmt.Sprintf("client.%s", c.UID)
 }
