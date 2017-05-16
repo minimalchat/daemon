@@ -10,11 +10,11 @@ import (
 
 	"github.com/googollee/go-socket.io" // Socket
 
-	"github.com/minimalchat/mnml-daemon/chat"
-	"github.com/minimalchat/mnml-daemon/client"
-	"github.com/minimalchat/mnml-daemon/operator"
-	"github.com/minimalchat/mnml-daemon/person"
-	"github.com/minimalchat/mnml-daemon/store" // InMemory store
+	"github.com/minimalchat/daemon/chat"
+	"github.com/minimalchat/daemon/client"
+	"github.com/minimalchat/daemon/operator"
+	"github.com/minimalchat/daemon/person"
+	"github.com/minimalchat/daemon/store" // InMemory store
 )
 
 // Log levels

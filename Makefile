@@ -3,7 +3,7 @@ GO_CMD = go
 LINT_CMD = $(GOPATH)/bin/golint
 
 # Directories
-PACKAGE = github.com/minimalchat/mnml-daemon
+PACKAGE = github.com/minimalchat/daemon
 SRC = $(GOPATH)/src/$(PACKAGE)
 DIST = $(GOPATH)/bin
 

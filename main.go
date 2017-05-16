@@ -11,12 +11,12 @@ import (
 
 	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
-	"github.com/minimalchat/mnml-daemon/server/rest"
-	"github.com/minimalchat/mnml-daemon/server/socket"
-	"github.com/minimalchat/mnml-daemon/store"
-	// "github.com/minimalchat/mnml-daemon/operator"
-	// "github.com/minimalchat/mnml-daemon/client"
-	// "github.com/minimalchat/mnml-daemon/chat"
+	"github.com/minimalchat/daemon/server/rest"
+	"github.com/minimalchat/daemon/server/socket"
+	"github.com/minimalchat/daemon/store"
+	// "github.com/minimalchat/daemon/operator"
+	// "github.com/minimalchat/daemon/client"
+	// "github.com/minimalchat/daemon/chat"
 )
 
 // Log levels

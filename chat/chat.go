@@ -6,9 +6,9 @@ import (
 
 	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
-	"github.com/minimalchat/mnml-daemon/client"
-	"github.com/minimalchat/mnml-daemon/operator"
-	// "github.com/minimalchat/mnml-daemon/person"
+	"github.com/minimalchat/daemon/client"
+	"github.com/minimalchat/daemon/operator"
+	// "github.com/minimalchat/daemon/person"
 )
 
 /*
