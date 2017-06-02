@@ -53,7 +53,7 @@ func readOperators(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 
 		result["operators"] = operators
 
-		log.Println(INFO, "operator:", "Reading operators", fmt.Sprintf("(%d records)", len(operators)))
+		log.Println(INFO, "api/operator:", "Reading operators", fmt.Sprintf("(%d records)", len(operators)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
@@ -72,7 +72,7 @@ func readOperator(ds *store.InMemory) func(resp http.ResponseWriter, req *http.R
 		id := params.ByName("id")
 		op, _ := ds.Get(fmt.Sprintf("operator.%s", id))
 
-		log.Println(DEBUG, "operator:", "Reading operator", params.ByName("id"))
+		log.Println(DEBUG, "api/operator:", "Reading operator", params.ByName("id"))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
@@ -104,7 +104,7 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 
 			// Save new record
 			ds.Put(op)
-			log.Println(DEBUG, "operator:", "Creating new operator", op)
+			log.Println(DEBUG, "api/operator:", "Creating new operator", op)
 
 		} else { // Update
 
@@ -131,7 +131,7 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 
 				// Save old record
 				ds.Put(old)
-				log.Println(DEBUG, "operator:", "Updating operator", old)
+				log.Println(DEBUG, "api/operator:", "Updating operator", old)
 			}
 		}
 
@@ -146,7 +146,7 @@ func deleteOperator(ds *store.InMemory) func(resp http.ResponseWriter, req *http
 		id := params.ByName("id")
 		err := ds.Remove(fmt.Sprintf("operator.%s", id))
 
-		log.Println(DEBUG, "operator:", "Removing operator", id)
+		log.Println(DEBUG, "api/operator:", "Removing operator", id)
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		if err != nil {

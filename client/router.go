@@ -62,7 +62,7 @@ func readClients(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Re
 
 		result["clients"] = clients
 
-		log.Println(INFO, "client:", "Reading clients", fmt.Sprintf("(%d records)", len(clients)))
+		log.Println(INFO, "api/client:", "Reading clients", fmt.Sprintf("(%d records)", len(clients)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
@@ -80,7 +80,7 @@ func readClient(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Req
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		cl, _ := ds.Get(fmt.Sprintf("client.%s", params.ByName("id")))
 
-		log.Println(DEBUG, "client:", "Reading client", params.ByName("id"))
+		log.Println(DEBUG, "api/client:", "Reading client", params.ByName("id"))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)

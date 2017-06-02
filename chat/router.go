@@ -79,7 +79,7 @@ func readChats(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Requ
 
 		result["chats"] = chats
 
-		log.Println(INFO, "chat:", "Reading chats", fmt.Sprintf("(%d records)", len(chats)))
+		log.Println(INFO, "api/chat:", "Reading chats", fmt.Sprintf("(%d records)", len(chats)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
@@ -97,7 +97,7 @@ func readChat(ds *store.InMemory) func(resp http.ResponseWriter, req *http.Reque
 	return func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		ch, _ := ds.Get(fmt.Sprintf("chat.%s", params.ByName("id")))
 
-		log.Println(DEBUG, "chat:", "Reading chat", params.ByName("id"))
+		log.Println(DEBUG, "api/chat:", "Reading chat", params.ByName("id"))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		if ch != nil {
@@ -137,7 +137,7 @@ func readMessages(ds *store.InMemory) func(resp http.ResponseWriter, req *http.R
 
 		result["messages"] = messages
 
-		log.Println(INFO, "message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
+		log.Println(INFO, "api/message:", "Reading messages", fmt.Sprintf("(%d records)", len(messages)))
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		resp.WriteHeader(http.StatusOK)
@@ -167,7 +167,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		if err := decoder.Decode(&msg); err != nil {
-			log.Println(ERROR, "message:", "Bad Request", err)
+			log.Println(ERROR, "api/message:", "Bad Request", err)
 			resp.WriteHeader(http.StatusBadRequest)
 
 			fmt.Fprintf(resp, "Bad Request")
@@ -175,7 +175,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 		}
 
 		if id == "" {
-			log.Println(ERROR, "message:", "Bad Request ID", id)
+			log.Println(ERROR, "api/message:", "Bad Request ID", id)
 			resp.WriteHeader(http.StatusBadRequest)
 
 			fmt.Fprintf(resp, "Bad Request")
@@ -185,7 +185,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 		result, _ := ds.Get(fmt.Sprintf("chat.%s", id))
 
 		if result == nil {
-			log.Println(DEBUG, "message:", "Unknown Chat ID", id, result)
+			log.Println(DEBUG, "api/message:", "Unknown Chat ID", id, result)
 			resp.WriteHeader(http.StatusNotFound)
 
 			fmt.Fprintf(resp, "Not Found")
@@ -193,7 +193,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 		}
 
 		if ch, ok := result.(Chat); ok {
-			log.Println(DEBUG, "operator:", msg.Content)
+			log.Println(DEBUG, "api/operator:", msg.Content)
 
 			// Fix if missing in Message object
 			if msg.Chat == "" {
@@ -204,7 +204,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 
 			ch.Client.Socket.Emit("operator:message", msg.Content, nil)
 		} else {
-			log.Println(ERROR, "message:", "Could not cast store data to struct", ok, result.(Chat))
+			log.Println(ERROR, "api/message:", "Could not cast store data to struct", ok, result.(Chat))
 			resp.WriteHeader(http.StatusInternalServerError)
 
 			fmt.Fprintf(resp, "Bad Request")
