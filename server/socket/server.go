@@ -83,11 +83,16 @@ func (s Server) emitToOperators(event string, data string) {
 
 	for _, op := range ops {
 		o := op.(*operator.Operator)
-		osck := s.Sockets[o.UID]
+		osck, ok := s.Sockets[o.UID]
 
-		log.Println(DEBUG, "socket:", fmt.Sprintf("Sent %s \"%s\" to %s", event, data, osck.Id()))
+		if !ok {
+			log.Println(WARNING, "socket:", "Operator went away")
+			continue
+		}
 
 		osck.Emit(event, data, nil)
+
+		log.Println(DEBUG, "socket:", fmt.Sprintf("Sent %s \"%s\" to %s", event, data, osck.Id()))
 	}
 }
 
@@ -160,12 +165,6 @@ func (s Server) onConnect(sock socketio.Socket) {
 
 		// TODO: Save chat?
 
-		if t == "operator" {
-			// delete(s.Operators, sock.Id())
-		} else if t == "client" {
-			// delete(s.Clients, sock.Id())
-		}
-
 		delete(s.Sockets, sock.Id())
 	})
 
@@ -181,22 +180,8 @@ func (s Server) onClientMessage(sock socketio.Socket) func(string) {
 		// String to JSON
 		json.Unmarshal([]byte(msg), &m)
 
-		// Create Message
-		// m := chat.Message{
-		// 	Timestamp: time.Now(),
-		// 	Content:   msg,
-		// 	// TODO: This duplication seems unecessary?
-		// 	Author: sock.Id(),
-		// 	Chat:   sock.Id(),
-		// }
-
 		// Save Message to datastore
 		s.store.Put(m)
-
-		// jsonMessage, _ := json.Marshal(m)
-		// var buffer bytes.Buffer
-		// buffer.Write(jsonMessage)
-		// buffer.WriteString("\n")
 
 		// Update Operators of the new messages
 		s.emitToOperators("client:message", msg)
@@ -217,7 +202,13 @@ func (s Server) onOperatorMessage(sock socketio.Socket) func(string) {
 		s.store.Put(m)
 
 		// Update Client with new message
-		clsck := s.Sockets[m.Chat]
+		clsck, ok := s.Sockets[m.Chat]
+
+		if !ok {
+			log.Println(WARNING, "socket:", "Client went away")
+			return
+		}
+
 		clsck.Emit("operator:message", msg, nil)
 	}
 }
