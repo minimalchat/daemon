@@ -13,7 +13,7 @@ import (
 	"github.com/minimalchat/daemon/chat"
 	"github.com/minimalchat/daemon/client"
 	"github.com/minimalchat/daemon/operator"
-	"github.com/minimalchat/daemon/person"
+	// "github.com/minimalchat/daemon/person"
 	"github.com/minimalchat/daemon/store" // InMemory store
 )
 
@@ -30,10 +30,11 @@ const (
 Server is the socket.io abstraction for Minimal Chat */
 type Server struct {
 	// TODO: Poor data structure, should thing of something smarter?
-	Operators map[string]*operator.Operator
-	Clients   map[string]*client.Client
-	Chats     map[string]*chat.Chat
-	Server    *socketio.Server
+	//  We need to store the active sockets rather than specific application
+	//  data.
+	Sockets map[string]socketio.Socket
+	store   *store.InMemory
+	server  *socketio.Server
 }
 
 /*
@@ -42,12 +43,15 @@ connections. */
 func Listen(ds *store.InMemory) (*Server, error) {
 	log.Println(DEBUG, "socket:", "Starting WebSocket server ...")
 
+	ping, _ := time.ParseDuration("5s")
+
 	srv, err := socketio.NewServer(nil)
+	srv.SetPingInterval(ping)
+
 	sck := Server{
-		Operators: make(map[string]*operator.Operator),
-		Clients:   make(map[string]*client.Client),
-		Chats:     make(map[string]*chat.Chat),
-		Server:    srv,
+		Sockets: make(map[string]socketio.Socket),
+		store:   ds,
+		server:  srv,
 	}
 
 	// TODO: Return an error instead
@@ -55,7 +59,7 @@ func Listen(ds *store.InMemory) (*Server, error) {
 		return nil, err
 	}
 
-	srv.On("connection", sck.onConnection(ds))
+	srv.On("connection", sck.onConnect)
 	srv.On("error", sck.onError)
 
 	return &sck, nil
@@ -64,163 +68,157 @@ func Listen(ds *store.InMemory) (*Server, error) {
 /*
 ServeHTTP serves the socket.io client script */
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.Server.ServeHTTP(w, r)
+	s.server.ServeHTTP(w, r)
 }
 
 func (s Server) emitToOperators(event string, data string) {
-	// if (event == nil) {
-	//   log.Println(WARNING, "Unknown event to emit")
-	//   return
-	// }
+	ops, _ := s.store.Search("operator.")
 
-	// Update Operators of the new messages
-	for _, op := range s.Operators {
-		log.Println(DEBUG, "socket:", fmt.Sprintf("Sending %s \"%s\" to %s", event, data, op.Socket.Id()))
+	if len(ops) == 0 {
+		log.Println(INFO, "socket:", fmt.Sprintf("No operators online (%d records)", len(ops)))
+		return
+	}
 
-		op.Socket.Emit(event, data, nil)
+	log.Println(INFO, "socket:", fmt.Sprintf("Sending '%s' message (%d operators)", event, len(ops)))
+
+	for _, op := range ops {
+		o := op.(*operator.Operator)
+		osck := s.Sockets[o.UID]
+
+		log.Println(DEBUG, "socket:", fmt.Sprintf("Sent %s \"%s\" to %s", event, data, osck.Id()))
+
+		osck.Emit(event, data, nil)
 	}
 }
 
-func (s Server) onOperatorConnection(ds *store.InMemory, sock socketio.Socket) {
+func (s Server) onOperatorConnection(sock socketio.Socket) {
+	// TODO: Operator should be created via API before a connection can
+	//  be made
 	// Create Operator
-	// TODO: Pull Operator from DB if we already know them
-	s.Operators[sock.Id()] = operator.Create(
-		operator.Operator{
-			// FirstName: "Operator",
-			// LastName: "Steve",
-			UserName: "steve",
-		},
-		sock,
-	)
+	op := operator.Create(sock.Id())
 
-	// Save Operator to DB
-	ds.Put(*s.Operators[sock.Id()])
-
+	// Save Operator to datastore
+	s.store.Put(op)
 }
 
-func (s Server) onClientConnection(ds *store.InMemory, sock socketio.Socket) {
-	// Create Client
-	// TODO: See if we can "recall" if this is a returning client?
-	s.Clients[sock.Id()] = client.Create(
-		client.Client{
-			Person: person.Person{
-				FirstName: "Site",
-				LastName:  "Visitor",
-			},
-			Name: "Site Visitor",
-		},
-		sock,
-	)
+func (s Server) onClientConnection(sock socketio.Socket) {
+	// TODO: Try to recover previous Client/Chat
 
-	// Save Client to DB
-	ds.Put(*s.Clients[sock.Id()])
+	// Create Client
+	cl := client.Create(sock.Id())
+
+	// Save Client to datastore
+	s.store.Put(cl)
 
 	// Create Chat
-	// TODO: See if we can "recall" the returning chat?
-	s.Chats[sock.Id()] = chat.Create(chat.Chat{
-		Client:       s.Clients[sock.Id()],
-		Operator:     nil,
-		Open:         true,
-		CreationTime: time.Now(),
-		UpdatedTime:  time.Now(),
-	})
+	ch := chat.Create(cl)
 
-	// Save Chat to DB
-	ds.Put(*s.Chats[sock.Id()])
+	// Save Chat to datastore
+	s.store.Put(ch)
 
-	jsonChat, _ := json.Marshal(s.Chats[sock.Id()])
+	// Convert to JSON object
+	jsonChat, _ := json.Marshal(ch)
 	var buffer bytes.Buffer
 	buffer.Write(jsonChat)
 	buffer.WriteString("\n")
 
-	// Emit to Operators
+	// Emit chat:new to Operators
 	s.emitToOperators("chat:new", buffer.String())
 
+	// Emit chat:new to self
+	sock.Emit("chat:new", buffer.String())
 }
 
-func (s Server) onConnection(ds *store.InMemory) func(sock socketio.Socket) {
-	return func(sock socketio.Socket) {
-		log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", sock.Request().URL.Query().Get("type"), sock.Id()))
+func (s Server) onConnect(sock socketio.Socket) {
 
-		t := sock.Request().URL.Query().Get("type")
+	// Get type GET parameter
+	t := sock.Request().URL.Query().Get("type")
 
-		// TODO: Verify that the socket connection is real
+	log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", t, sock.Id()))
+
+	// TODO: Verify that the socket connection is real
+	if t == "operator" {
+
+		s.onOperatorConnection(sock)
+
+	} else if t == "client" {
+
+		s.onClientConnection(sock)
+	} else {
+		// TODO: Write some proper error handling here, do we close the connection?
+		log.Println(ERROR, "socket:", "Unknown chat type specified")
+	}
+
+	// Save Socket to use later
+	s.Sockets[sock.Id()] = sock
+
+	sock.On("client:message", s.onClientMessage(sock))
+	sock.On("operator:message", s.onOperatorMessage(sock))
+
+	sock.On("disconnection", func() {
+		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
+
+		// TODO: Save chat?
+
 		if t == "operator" {
-
-			s.onOperatorConnection(ds, sock)
-
+			// delete(s.Operators, sock.Id())
 		} else if t == "client" {
-
-			s.onClientConnection(ds, sock)
-
-		} else {
-
-			// TODO: Write some proper error handling here, do we close the connection?
-			log.Println(ERROR, "socket:", "Unknown chat type specified")
+			// delete(s.Clients, sock.Id())
 		}
 
-		sock.On("client:message", s.onClientMessage(ds, sock))
-		sock.On("operator:message", s.onOperatorMessage(ds, sock))
+		delete(s.Sockets, sock.Id())
+	})
 
-		// Disconnection event
-		sock.On("disconnection", func() {
-			log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
-
-			// TODO: Save chat?
-
-			if t == "operator" {
-
-				delete(s.Operators, sock.Id())
-			} else if t == "client" {
-
-				delete(s.Clients, sock.Id())
-			}
-		})
-	}
 }
 
-func (s Server) onClientMessage(ds *store.InMemory, sock socketio.Socket) func(msg string) {
+func (s Server) onClientMessage(sock socketio.Socket) func(string) {
 	return func(msg string) {
 
 		log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", sock.Id(), msg))
 
-		// Create Message
-		m := chat.Message{
-			Timestamp: time.Now(),
-			Content:   msg,
-			Author:    s.Clients[sock.Id()].StoreKey(),
-			Chat:      s.Chats[sock.Id()].UID,
-		}
+		var m chat.Message
 
-		// Save Message to DB
-		ds.Put(m)
-
-		jsonMessage, _ := json.Marshal(m)
-		var buffer bytes.Buffer
-		buffer.Write(jsonMessage)
-		buffer.WriteString("\n")
-
-		// Update Operators of the new messages
-		s.emitToOperators("client:message", buffer.String())
-	}
-}
-
-func (s Server) onOperatorMessage(ds *store.InMemory, sock socketio.Socket) func(msg string) {
-	return func(msg string) {
-		// TODO: Get chat from message, and then update it/send to correct client
-
-		log.Println(DEBUG, "operator", fmt.Sprintf("%s: %s", sock.Id(), msg))
+		// String to JSON
+		json.Unmarshal([]byte(msg), &m)
 
 		// Create Message
 		// m := chat.Message{
-		//   Timestamp: time.Now(),
-		//   Content: msg,
-		//   Author: this.Operators[sock.Id()].StoreKey(),
-		//   Chat: ch.ID,
+		// 	Timestamp: time.Now(),
+		// 	Content:   msg,
+		// 	// TODO: This duplication seems unecessary?
+		// 	Author: sock.Id(),
+		// 	Chat:   sock.Id(),
 		// }
 
-		// Save Message to DB
-		// ds.Put(m)
+		// Save Message to datastore
+		s.store.Put(m)
+
+		// jsonMessage, _ := json.Marshal(m)
+		// var buffer bytes.Buffer
+		// buffer.Write(jsonMessage)
+		// buffer.WriteString("\n")
+
+		// Update Operators of the new messages
+		s.emitToOperators("client:message", msg)
+	}
+}
+
+func (s Server) onOperatorMessage(sock socketio.Socket) func(string) {
+	return func(msg string) {
+
+		log.Println(DEBUG, "operator", fmt.Sprintf("%s: %s", sock.Id(), msg))
+
+		var m chat.Message
+
+		// String to JSON
+		json.Unmarshal([]byte(msg), &m)
+
+		// Save Message to datastore
+		s.store.Put(m)
+
+		// Update Client with new message
+		clsck := s.Sockets[m.Chat]
+		clsck.Emit("operator:message", msg, nil)
 	}
 }
 

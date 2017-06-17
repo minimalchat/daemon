@@ -2,31 +2,51 @@ package client
 
 import (
 	"fmt"
+	"log"
 
-	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-	"github.com/googollee/go-socket.io" // Socket
+	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+	// "github.com/googollee/go-socket.io" // Socket
 
 	"github.com/minimalchat/daemon/person"
+)
+
+const (
+	DEBUG   string = "DEBUG"
+	INFO    string = "INFO"
+	WARNING string = "WARN"
+	ERROR   string = "ERROR"
+	FATAL   string = "FATAL"
 )
 
 /*
 Client struct defines a web visitor */
 type Client struct {
 	person.Person
-	Name   string          `json:"name"`
-	UID    string          `json:"id"`
-	Socket socketio.Socket `json:"socket"`
+	Name string `json:"name"`
+	UID  string `json:"id"`
+	// Socket socketio.Socket `json:"socket"`
 }
 
 /*
 Create builds a new `Client` */
-func Create(c Client, sock socketio.Socket) *Client {
-	if c.UID == "" {
-		// uuid, _ := uuid.NewRandom()
-		c.UID = sock.Id()
+func Create(id string) *Client {
+	c := Client{
+		Person: person.Person{
+			FirstName: "Site",
+			LastName:  "Visitor",
+		},
+		Name: "Site Visitor",
 	}
 
-	c.Socket = sock
+	if id == "" {
+		log.Println(WARNING, "No client ID specified")
+
+		uuid, _ := uuid.NewRandom()
+
+		c.UID = uuid.String()
+	} else {
+		c.UID = id
+	}
 
 	return &c
 }

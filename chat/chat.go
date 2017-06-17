@@ -4,33 +4,37 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 
 	"github.com/minimalchat/daemon/client"
-	"github.com/minimalchat/daemon/operator"
+	// "github.com/minimalchat/daemon/operator"
 	// "github.com/minimalchat/daemon/person"
 )
 
 /*
 Chat struct defines communication session */
 type Chat struct {
-	UID          string             `json:"id"`
-	Client       *client.Client     `json:"client"`
-	Operator     *operator.Operator `json:"operator"`
-	CreationTime time.Time          `json:"creation_time"`
-	UpdatedTime  time.Time          `json:"update_time"`
-	Open         bool               `json:"open"`
+	UID    string         `json:"id"`
+	Client *client.Client `json:"client"`
+	// TODO: Turn Operator into array of Operators
+	// Operator     *operator.Operator `json:"operator"`
+	CreationTime time.Time `json:"creation_time"`
+	UpdatedTime  time.Time `json:"update_time"`
+	Open         bool      `json:"open"`
 }
 
 /*
 Create builds a new `Chat` session*/
-func Create(chat Chat) *Chat {
-	if chat.UID == "" {
-		uuid, _ := uuid.NewRandom()
-		chat.UID = uuid.String()
+func Create(cl *client.Client) *Chat {
+	c := Chat{
+		UID:          cl.UID,
+		Client:       cl,
+		CreationTime: time.Now(),
+		UpdatedTime:  time.Now(),
+		Open:         true,
 	}
 
-	return &chat
+	return &c
 }
 
 func (c *Chat) String() string {

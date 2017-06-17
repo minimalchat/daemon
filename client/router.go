@@ -12,13 +12,13 @@ import (
 )
 
 // Log levels
-const (
-	DEBUG   string = "DEBUG"
-	INFO    string = "INFO"
-	WARNING string = "WARN"
-	ERROR   string = "ERROR"
-	FATAL   string = "FATAL"
-)
+//const (
+//	DEBUG   string = "DEBUG"
+//	INFO    string = "INFO"
+//	WARNING string = "WARN"
+//	ERROR   string = "ERROR"
+//	FATAL   string = "FATAL"
+//)
 
 /*
 Routes defines the Client API routes  */

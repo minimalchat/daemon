@@ -3,8 +3,8 @@ package operator
 import (
 	"fmt"
 
-	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-	"github.com/googollee/go-socket.io" // Socket
+	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
+	// "github.com/googollee/go-socket.io" // Socket
 
 	"github.com/minimalchat/daemon/person"
 )
@@ -13,20 +13,24 @@ import (
 Operator struct defines a site owner */
 type Operator struct {
 	person.Person
-	UserName string          `json:"username"`
-	UID      string          `json:"id"`
-	Socket   socketio.Socket `json:"socket"`
+	UserName string `json:"username"`
+	UID      string `json:"id"`
+	// Socket   socketio.Socket `json:"socket"`
 }
 
 /*
 Create builds a new `Operator` */
-func Create(o Operator, sock socketio.Socket) *Operator {
-	if o.UID == "" {
-		// uuid, _ := uuid.NewRandom()
-		o.UID = sock.Id()
+func Create(id string) *Operator {
+	o := Operator{
+		UserName: "steve",
 	}
 
-	o.Socket = sock
+	if id == "" {
+		uuid, _ := uuid.NewRandom()
+		o.UID = uuid.String()
+	} else {
+		o.UID = id
+	}
 
 	return &o
 }
