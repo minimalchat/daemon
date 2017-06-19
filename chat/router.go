@@ -193,7 +193,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 		}
 
 		if ch, ok := result.(Chat); ok {
-			log.Println(DEBUG, "api/operator:", msg.Content)
+			log.Println(DEBUG, "api/operator:", msg.Content, ch.UID)
 
 			// Fix if missing in Message object
 			if msg.Chat == "" {
@@ -202,7 +202,8 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 
 			ds.Put(msg)
 
-			ch.Client.Socket.Emit("operator:message", msg.Content, nil)
+			// TODO: Pass API post message to Operator via socket somehow
+			// ch.Client.Socket.Emit("operator:message", msg.Content, nil)
 		} else {
 			log.Println(ERROR, "api/message:", "Could not cast store data to struct", ok, result.(Chat))
 			resp.WriteHeader(http.StatusInternalServerError)
