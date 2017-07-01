@@ -1,11 +1,12 @@
 # Commands
-GO_CMD = go
+GO_CMD = `which go`
 LINT_CMD = $(GOPATH)/bin/golint
+DOCKER_CMD = `which docker`
 
 # Directories
 PACKAGE = github.com/minimalchat/daemon
 SRC = $(GOPATH)/src/$(PACKAGE)
-DIST = $(GOPATH)/bin
+DIST = $(SRC)/dist
 
 default: lint test coverage clean compile
 
@@ -27,7 +28,7 @@ test:
 
 coverage:
 	cd $(SRC)
-	$(DIST)/overalls -project=$(PACKAGE) -covermode=count
+	$(GOPATH)/bin/overalls -project=$(PACKAGE) -covermode=count
 	$(GOPATH)/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci -repotoken $(COVERALLS_TOKEN)
 
 clean:
@@ -36,7 +37,10 @@ clean:
 compile:
 	mkdir -p $(DIST)
 	cd $(SRC)
-	$(GO_CMD) build -o $(DIST)/mnml-daemon
+	$(GO_CMD) build -o $(DIST)/daemon
+
+docker: compile
+	$(DOCKER_CMD) build -t mnml-daemon $(SRC)
 
 go:
 	cd $(SRC)
