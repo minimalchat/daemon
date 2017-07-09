@@ -1,3 +1,4 @@
+golang/protobuf/jsonpb
 golang/lint/golint
 julienschmidt/httprouter
 googollee/go-socket.io
