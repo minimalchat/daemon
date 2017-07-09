@@ -1,0 +1,68 @@
+package socket
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/googollee/go-socket.io" // Socket
+
+	"github.com/minimalchat/daemon/chat"
+	"github.com/minimalchat/daemon/client"
+	"github.com/minimalchat/daemon/operator"
+	"github.com/minimalchat/daemon/person"
+	"github.com/minimalchat/daemon/store" // InMemory store
+)
+
+// Log levels
+const (
+	DEBUG   string = "DEBUG"
+	INFO    string = "INFO"
+	WARNING string = "WARN"
+	ERROR   string = "ERROR"
+	FATAL   string = "FATAL"
+)
+
+/*
+Server is the socket.io abstraction for Minimal Chat */
+type Server struct {
+	// TODO: Poor data structure, should thing of something smarter?
+	//  We need to store the active sockets rather than specific application
+	//  data.
+	Store   store.InMemory
+	Sockets map[string]*socketio.Socket
+	server  *socketio.Server
+}
+
+/*
+Listen creates a new Server instance and begins listening for ws://
+connections. */
+func Listen(ds *store.InMemory) (*Server, error) {
+	log.Println(DEBUG, "socket:", "Starting WebSocket server ...")
+
+	srv, err := socketio.NewServer(nil)
+	sck := Server{
+		Store:   ds,
+		Sockets: make(map[string]*socketio.Socket),
+		server:  srv,
+	}
+
+	// TODO: Return an error instead
+	if err != nil {
+		return nil, err
+	}
+
+	// srv.On("connection", sck.onConnection(ds))
+	// srv.On("error", sck.onError)
+
+	return &sck, nil
+}
+
+/*
+ServeHTTP serves the socket.io client script */
+func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.server.ServeHTTP(w, r)
+}

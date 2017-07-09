@@ -1,22 +1,12 @@
 package operator
 
 import (
+	"bytes"
 	"fmt"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-	// "github.com/googollee/go-socket.io" // Socket
-
-	"github.com/minimalchat/daemon/person"
 )
-
-/*
-Operator struct defines a site owner */
-type Operator struct {
-	person.Person
-	UserName string `json:"username"`
-	UID      string `json:"id"`
-	// Socket   socketio.Socket `json:"socket"`
-}
 
 /*
 Create builds a new `Operator` */
@@ -27,26 +17,44 @@ func Create(id string) *Operator {
 
 	if id == "" {
 		uuid, _ := uuid.NewRandom()
-		o.UID = uuid.String()
+		o.Uid = uuid.String()
 	} else {
-		o.UID = id
+		o.Uid = id
 	}
 
 	return &o
 }
 
-func (o Operator) String() string {
-	return fmt.Sprintf("%s [%s %s]", o.UserName, o.FirstName, o.LastName)
+func (o *Operator) GetFullName() string {
+	if o != nil {
+		return fmt.Sprintf("%s %s", o.GetFirstName(), o.GetLastName())
+	}
+	return ""
 }
 
-// func (this Operator) ID() string {
-// 	return this.UserName
-// }
+func (o *Operator) UnmarshalJSON(data []byte) error {
+	u := jsonpb.Unmarshaler{}
+	buf := bytes.NewBuffer(data)
 
-/*
-StoreKey defines a key for a DataStore to reference this item */
+	if err := u.Unmarshal(buf, &*o); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o Operator) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+
+	m := jsonpb.Marshaler{}
+
+	if err := m.Marshal(&buf, &o); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 func (o Operator) StoreKey() string {
 	return fmt.Sprintf("operator.%s", o.UserName)
-	/*
-	   StoreKey defines a key for a DataStore to reference this item */
 }

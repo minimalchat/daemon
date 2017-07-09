@@ -1,0 +1,9 @@
+syntax = "proto3";
+package operator;
+
+message Operator {
+  string first_name = 1 [json_name="first_name"];
+  string last_name = 2 [json_name="last_name"];
+  string user_name = 3 [json_name="username"];
+  string uid = 4 [json_name="id"];
+}

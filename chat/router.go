@@ -193,7 +193,7 @@ func createMessage(ds *store.InMemory) func(resp http.ResponseWriter, req *http.
 		}
 
 		if ch, ok := result.(Chat); ok {
-			log.Println(DEBUG, "api/operator:", msg.Content, ch.UID)
+			log.Println(DEBUG, "api/operator:", msg.Content, ch.Uid)
 
 			// Fix if missing in Message object
 			if msg.Chat == "" {

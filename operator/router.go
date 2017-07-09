@@ -121,11 +121,11 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 			if old, ok := result.(Operator); ok {
 
 				// Update fields of old record
-				if op.FirstName != "" {
+				if op.GetFirstName() != "" {
 					old.FirstName = op.FirstName
 				}
 
-				if op.LastName != "" {
+				if op.GetLastName() != "" {
 					old.LastName = op.LastName
 				}
 

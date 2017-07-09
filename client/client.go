@@ -1,41 +1,21 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-	// "github.com/googollee/go-socket.io" // Socket
-
-	"github.com/minimalchat/daemon/person"
 )
-
-const (
-	DEBUG   string = "DEBUG"
-	INFO    string = "INFO"
-	WARNING string = "WARN"
-	ERROR   string = "ERROR"
-	FATAL   string = "FATAL"
-)
-
-/*
-Client struct defines a web visitor */
-type Client struct {
-	person.Person
-	Name string `json:"name"`
-	UID  string `json:"id"`
-	// Socket socketio.Socket `json:"socket"`
-}
 
 /*
 Create builds a new `Client` */
 func Create(id string) *Client {
 	c := Client{
-		Person: person.Person{
-			FirstName: "Site",
-			LastName:  "Visitor",
-		},
-		Name: "Site Visitor",
+		FirstName: "Site",
+		LastName:  "Visitor",
+		Name:      "Site Visitor",
 	}
 
 	if id == "" {
@@ -43,31 +23,46 @@ func Create(id string) *Client {
 
 		uuid, _ := uuid.NewRandom()
 
-		c.UID = uuid.String()
+		c.Uid = uuid.String()
 	} else {
-		c.UID = id
+		c.Uid = id
 	}
 
 	return &c
 }
 
-// func (this *Client) Send(msg chat.Message) error {
-//   this.socket.Emit("operator:message", msg.Content, func (sock socketio.Socket, data string) {
-//     log.Println(DEBUG, "client:", "Sent message")
-//   })
-//   return nil
-// }
+// func UnmarshalJSON
 
-func (c Client) String() string {
-	return fmt.Sprintf("%s [%s]", c.Name, c.Name)
+func (c *Client) GetFullName() string {
+	if c != nil {
+		return fmt.Sprintf("%s %s", c.GetFirstName(), c.GetLastName())
+	}
+	return ""
 }
 
-// func (this Client) ID() string {
-//  return this.UID
-// }
+func (c *Client) UnmarshalJSON(data []byte) error {
+	u := jsonpb.Unmarshaler{}
+	buf := bytes.NewBuffer(data)
 
-/*
-StoreKey defines a key for a DataStore to reference this item */
+	if err := u.Unmarshal(buf, &*c); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c Client) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+
+	m := jsonpb.Marshaler{}
+
+	if err := m.Marshal(&buf, &c); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 func (c Client) StoreKey() string {
-	return fmt.Sprintf("client.%s", c.UID)
+	return fmt.Sprintf("client.%s", c.Uid)
 }

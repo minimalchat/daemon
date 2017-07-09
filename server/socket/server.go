@@ -83,7 +83,7 @@ func (s Server) emitToOperators(event string, data string) {
 
 	for _, op := range ops {
 		o := op.(*operator.Operator)
-		osck, ok := s.Sockets[o.UID]
+		osck, ok := s.Sockets[o.Uid]
 
 		if !ok {
 			log.Println(WARNING, "socket:", "Operator went away")
