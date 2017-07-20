@@ -160,6 +160,9 @@ func (s Server) onConnect(sock socketio.Socket) {
 	sock.On("client:message", s.onClientMessage(sock))
 	sock.On("operator:message", s.onOperatorMessage(sock))
 
+	sock.On("client:typing", s.onClientTyping(sock))
+	sock.On("client:idle", s.onClientIdle(sock))
+
 	sock.On("disconnection", func() {
 		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
 
@@ -210,6 +213,24 @@ func (s Server) onOperatorMessage(sock socketio.Socket) func(string) {
 		}
 
 		clsck.Emit("operator:message", msg, nil)
+	}
+}
+
+func (s Server) onClientTyping(sock socketio.Socket) func(string) {
+	return func(msg string) {
+		log.Println(DEBUG, "client", "typing")
+
+		// Update Operators that the client is typing
+		s.emitToOperators("client:typing", msg)
+	}
+}
+
+func (s Server) onClientIdle(sock socketio.Socket) func(string) {
+	return func(msg string) {
+		log.Println(DEBUG, "client", "idle")
+
+		// Update Operators that the client is idle
+		s.emitToOperators("client:idle", msg)
 	}
 }
 
