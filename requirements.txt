@@ -5,3 +5,4 @@ googollee/go-socket.io
 wayn3h0/go-uuid
 go-playground/overalls
 mattn/goveralls
+golang/protobuf
