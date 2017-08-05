@@ -62,6 +62,7 @@ func main() {
 
 	if needHelp {
 		help()
+
 		return
 	}
 
@@ -70,7 +71,7 @@ func main() {
 	db := new(store.InMemory)
 
 	// Socket.io
-	sock, err := socket.Create()
+	sock, err := socket.Create(db)
 
 	if err != nil {
 		log.Fatal(err)
