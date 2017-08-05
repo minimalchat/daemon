@@ -1,0 +1,22 @@
+syntax = "proto3";
+package chat;
+
+import "google/protobuf/timestamp.proto";
+import "client/client.proto";
+
+message Chat {
+  google.protobuf.Timestamp creation_time = 1 [json_name="creation_time"];
+  google.protobuf.Timestamp updated_time = 2 [json_name="update_time"];
+
+  bool open = 3;
+  string uid = 4 [json_name="id"];
+
+  client.Client client = 5;
+}
+
+message Message {
+  google.protobuf.Timestamp timestamp = 1;
+  string content = 2;
+  string author = 3;
+  string chat = 4;
+}

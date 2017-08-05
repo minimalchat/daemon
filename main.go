@@ -62,6 +62,7 @@ func main() {
 
 	if needHelp {
 		help()
+
 		return
 	}
 
@@ -70,11 +71,13 @@ func main() {
 	db := new(store.InMemory)
 
 	// Socket.io
-	socket, err := socket.Listen(db)
+	sock, err := socket.Create(db)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go sock.Listen()
 
 	// Server
 	server := rest.Listen(config.IP, config.Port, db)
@@ -85,7 +88,7 @@ func main() {
 		resp.Header().Set("Access-Control-Allow-Credentials", "true")
 		// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
 
-		socket.ServeHTTP(resp, req)
+		sock.ServeHTTP(resp, req)
 	})
 
 	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))

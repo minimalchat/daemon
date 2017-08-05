@@ -1,49 +1,62 @@
 package chat
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
-	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-
+	"github.com/golang/protobuf/jsonpb"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/minimalchat/daemon/client"
-	// "github.com/minimalchat/daemon/operator"
-	// "github.com/minimalchat/daemon/person"
 )
-
-/*
-Chat struct defines communication session */
-type Chat struct {
-	UID    string         `json:"id"`
-	Client *client.Client `json:"client"`
-	// TODO: Turn Operator into array of Operators
-	// Operator     *operator.Operator `json:"operator"`
-	CreationTime time.Time `json:"creation_time"`
-	UpdatedTime  time.Time `json:"update_time"`
-	Open         bool      `json:"open"`
-}
 
 /*
 Create builds a new `Chat` session*/
 func Create(cl *client.Client) *Chat {
+	now := time.Now()
+
+	// Get the unix timestamp (seconds since epoch)
+	seconds := now.Unix()
+	nanos := int32(now.Sub(time.Unix(seconds, 0)))
+
+	ts := &timestamp.Timestamp{
+		Seconds: seconds,
+		Nanos:   nanos,
+	}
+
 	c := Chat{
-		UID:          cl.UID,
-		Client:       cl,
-		CreationTime: time.Now(),
-		UpdatedTime:  time.Now(),
+		CreationTime: ts,
+		UpdatedTime:  ts,
 		Open:         true,
+		Uid:          cl.Uid,
+		Client:       cl,
 	}
 
 	return &c
 }
 
-func (c *Chat) String() string {
-	// return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
-	return c.UID
+func (c *Chat) UnmarshaJSON(data []byte) error {
+	u := jsonpb.Unmarshaler{}
+	buf := bytes.NewBuffer(data)
+
+	if err := u.Unmarshal(buf, &*c); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-/*
-StoreKey defines a key for a DataStore to reference this item */
+func (c Chat) MarshalJSON() ([]byte, error) {
+	m := jsonpb.Marshaler{}
+	var buf bytes.Buffer
+
+	if err := m.Marshal(&buf, &c); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 func (c Chat) StoreKey() string {
-	return fmt.Sprintf("chat.%s", c.UID)
+	return fmt.Sprintf("chat.%s", c.Uid)
 }

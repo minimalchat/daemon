@@ -1,26 +1,35 @@
 package chat
 
 import (
+	"bytes"
 	"fmt"
-	"time"
+
+	"github.com/golang/protobuf/jsonpb"
 )
 
-/*
-Message struct defines the object that stores an individual communication */
-type Message struct {
-	Timestamp time.Time `json:"timestamp"`
-	Content   string    `json:"content"`
-	Author    string    `json:"author"`
-	Chat      string    `json:"chat"`
+func (m *Message) UnmarshalJSON(data []byte) error {
+	u := jsonpb.Unmarshaler{}
+	buf := bytes.NewBuffer(data)
+
+	if err := u.Unmarshal(buf, &*m); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (m *Message) String() string {
-	// return fmt.Sprintf("%s: %s [%s %s]", this.id, this.operator.UserName, this.FirstName, this.LastName)
-	return m.Content
+func (m Message) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+
+	mrsh := jsonpb.Marshaler{}
+
+	if err := mrsh.Marshal(&buf, &m); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
-/*
-StoreKey defines a key for a DataStore to reference this item */
 func (m Message) StoreKey() string {
-	return fmt.Sprintf("message.%s-%d", m.Chat, m.Timestamp.Unix())
+	return fmt.Sprintf("message.%s-%d", m.Chat, m.Timestamp.Seconds)
 }

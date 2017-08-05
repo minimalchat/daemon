@@ -1,8 +1,8 @@
 package socket
 
 import (
-	"bytes"
-	"encoding/json"
+	// "bytes"
+	// "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,9 +10,9 @@ import (
 
 	"github.com/googollee/go-socket.io" // Socket
 
-	"github.com/minimalchat/daemon/chat"
-	"github.com/minimalchat/daemon/client"
-	"github.com/minimalchat/daemon/operator"
+	// "github.com/minimalchat/daemon/chat"
+	// "github.com/minimalchat/daemon/client"
+	// "github.com/minimalchat/daemon/operator"
 	// "github.com/minimalchat/daemon/person"
 	"github.com/minimalchat/daemon/store" // InMemory store
 )
@@ -29,192 +29,165 @@ const (
 /*
 Server is the socket.io abstraction for Minimal Chat */
 type Server struct {
-	// TODO: Poor data structure, should thing of something smarter?
-	//  We need to store the active sockets rather than specific application
-	//  data.
-	Sockets map[string]socketio.Socket
-	store   *store.InMemory
-	server  *socketio.Server
+	store *store.InMemory
+	sock  *socketio.Server
+
+	sockets map[*Socket]bool
+
+	registerClient       chan *Socket
+	registerOperator     chan *Socket
+	unregister           chan *Socket
+	broadcastToOperators chan *SocketMessage
+	broadcastToClient    chan *SocketMessage
+}
+
+func Create(ds *store.InMemory) (*Server, error) {
+	log.Println(DEBUG, "socket:", "Starting WebSocket server ...")
+
+	ping, _ := time.ParseDuration("5s")
+
+	srv := &Server{
+		store: ds,
+
+		registerClient:   make(chan *Socket),
+		registerOperator: make(chan *Socket),
+
+		unregister: make(chan *Socket),
+
+		broadcastToOperators: make(chan *SocketMessage),
+		broadcastToClient:    make(chan *SocketMessage),
+
+		sockets: make(map[*Socket]bool),
+	}
+
+	sock, err := socketio.NewServer(nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	srv.sock = sock
+	srv.sock.SetPingInterval(ping)
+
+	srv.sock.On("connection", func(s socketio.Socket) {
+		go srv.onConnect(s)
+	})
+
+	return srv, nil
 }
 
 /*
 Listen creates a new Server instance and begins listening for ws://
 connections. */
-func Listen(ds *store.InMemory) (*Server, error) {
-	log.Println(DEBUG, "socket:", "Starting WebSocket server ...")
+func (s Server) Listen() {
 
-	ping, _ := time.ParseDuration("5s")
+	for {
+		select {
+		case data := <-s.broadcastToClient:
+			for sock := range s.sockets {
+				if sock.conn.Id() == data.target {
+					select {
+					case sock.send <- data:
+					default:
+						close(sock.send)
+						delete(s.sockets, sock)
+					}
+				}
+			}
+		case data := <-s.broadcastToOperators:
+			for sock := range s.sockets {
+				if sock.connType == OPERATOR {
+					select {
+					case sock.send <- data:
+					default:
+						log.Println(DEBUG, "socket:", fmt.Sprintf("%s send channel not available, closing ..", sock.conn.Id()))
+						close(sock.send)
+						delete(s.sockets, sock)
+					}
+				}
+			}
+		case sock := <-s.registerOperator:
+			s.sockets[sock] = true
+		case sock := <-s.registerClient:
+			s.sockets[sock] = true
+		case sock := <-s.unregister:
+			if _, ok := s.sockets[sock]; ok {
+				delete(s.sockets, sock)
+				close(sock.send)
+			}
+		}
+	}
+}
 
-	srv, err := socketio.NewServer(nil)
-	srv.SetPingInterval(ping)
+func (s *Server) onConnect(c socketio.Socket) {
 
-	sck := Server{
-		Sockets: make(map[string]socketio.Socket),
-		store:   ds,
-		server:  srv,
+	var t SocketType
+
+	// Identify the connection type
+	if c.Request().URL.Query().Get("type") == "client" {
+		t = CLIENT
+	} else if c.Request().URL.Query().Get("type") == "operator" {
+		t = OPERATOR
+	} else {
+		log.Println(WARNING, "socket:", "Unknown connection type, dropping ...")
+		return
 	}
 
-	// TODO: Return an error instead
-	if err != nil {
-		return nil, err
+	log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", t, c.Id()))
+
+	// Create a Socket Connection
+	sock := Socket{
+		server: s,
+
+		conn:     c,
+		connType: t,
+
+		send: make(chan *SocketMessage),
 	}
 
-	srv.On("connection", sck.onConnect)
-	srv.On("error", sck.onError)
+	// Start listening for channel messages
+	go sock.Listen()
 
-	return &sck, nil
+	// Register event types
+	// TODO: Do I really need to listen for both on every socket?
+
+	sock.conn.On("client:message", func(data string) {
+		go sock.onClientMessage(data)
+	})
+
+	sock.conn.On("operator:message", func(data string) {
+		go sock.onOperatorMessage(data)
+	})
+
+	sock.conn.On("disconnection", func() {
+		s.unregister <- &sock
+	})
+
+	// Register the new client, depending on connection type
+	switch sock.connType {
+	case OPERATOR:
+		// Register the new Socket with the server as an Operator
+		s.registerOperator <- &sock
+
+		// TODO: This may not be the right name for this func now
+		go sock.onOperatorConnection()
+
+		break
+	case CLIENT:
+		// Register the new Socket with the server as a Client
+		s.registerClient <- &sock
+
+		// TODO: This may not be the right name for this func now
+		go sock.onClientConnection()
+
+		break
+	default:
+		log.Println(ERROR, "socket:", "Unknown connection type specified")
+	}
 }
 
 /*
 ServeHTTP serves the socket.io client script */
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.server.ServeHTTP(w, r)
-}
-
-func (s Server) emitToOperators(event string, data string) {
-	ops, _ := s.store.Search("operator.")
-
-	if len(ops) == 0 {
-		log.Println(INFO, "socket:", fmt.Sprintf("No operators online (%d records)", len(ops)))
-		return
-	}
-
-	log.Println(INFO, "socket:", fmt.Sprintf("Sending '%s' message (%d operators)", event, len(ops)))
-
-	for _, op := range ops {
-		o := op.(*operator.Operator)
-		osck, ok := s.Sockets[o.UID]
-
-		if !ok {
-			log.Println(WARNING, "socket:", "Operator went away")
-			continue
-		}
-
-		osck.Emit(event, data, nil)
-
-		log.Println(DEBUG, "socket:", fmt.Sprintf("Sent %s \"%s\" to %s", event, data, osck.Id()))
-	}
-}
-
-func (s Server) onOperatorConnection(sock socketio.Socket) {
-	// TODO: Operator should be created via API before a connection can
-	//  be made
-	// Create Operator
-	op := operator.Create(sock.Id())
-
-	// Save Operator to datastore
-	s.store.Put(op)
-}
-
-func (s Server) onClientConnection(sock socketio.Socket) {
-	// TODO: Try to recover previous Client/Chat
-
-	// Create Client
-	cl := client.Create(sock.Id())
-
-	// Save Client to datastore
-	s.store.Put(cl)
-
-	// Create Chat
-	ch := chat.Create(cl)
-
-	// Save Chat to datastore
-	s.store.Put(ch)
-
-	// Convert to JSON object
-	jsonChat, _ := json.Marshal(ch)
-	var buffer bytes.Buffer
-	buffer.Write(jsonChat)
-	buffer.WriteString("\n")
-
-	// Emit chat:new to Operators
-	s.emitToOperators("chat:new", buffer.String())
-
-	// Emit chat:new to self
-	sock.Emit("chat:new", buffer.String())
-}
-
-func (s Server) onConnect(sock socketio.Socket) {
-
-	// Get type GET parameter
-	t := sock.Request().URL.Query().Get("type")
-
-	log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", t, sock.Id()))
-
-	// TODO: Verify that the socket connection is real
-	if t == "operator" {
-
-		s.onOperatorConnection(sock)
-
-	} else if t == "client" {
-
-		s.onClientConnection(sock)
-	} else {
-		// TODO: Write some proper error handling here, do we close the connection?
-		log.Println(ERROR, "socket:", "Unknown chat type specified")
-	}
-
-	// Save Socket to use later
-	s.Sockets[sock.Id()] = sock
-
-	sock.On("client:message", s.onClientMessage(sock))
-	sock.On("operator:message", s.onOperatorMessage(sock))
-
-	sock.On("disconnection", func() {
-		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.Id()))
-
-		// TODO: Save chat?
-
-		delete(s.Sockets, sock.Id())
-	})
-
-}
-
-func (s Server) onClientMessage(sock socketio.Socket) func(string) {
-	return func(msg string) {
-
-		log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", sock.Id(), msg))
-
-		var m chat.Message
-
-		// String to JSON
-		json.Unmarshal([]byte(msg), &m)
-
-		// Save Message to datastore
-		s.store.Put(m)
-
-		// Update Operators of the new messages
-		s.emitToOperators("client:message", msg)
-	}
-}
-
-func (s Server) onOperatorMessage(sock socketio.Socket) func(string) {
-	return func(msg string) {
-
-		log.Println(DEBUG, "operator", fmt.Sprintf("%s: %s", sock.Id(), msg))
-
-		var m chat.Message
-
-		// String to JSON
-		json.Unmarshal([]byte(msg), &m)
-
-		// Save Message to datastore
-		s.store.Put(m)
-
-		// Update Client with new message
-		clsck, ok := s.Sockets[m.Chat]
-
-		if !ok {
-			log.Println(WARNING, "socket:", "Client went away")
-			return
-		}
-
-		clsck.Emit("operator:message", msg, nil)
-	}
-}
-
-func (s Server) onError(sock socketio.Socket, err error) {
-
-	// TODO: Write some proper error handling here
-	log.Println(ERROR, "socket:", err)
+	s.sock.ServeHTTP(w, r)
 }
