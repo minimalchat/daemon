@@ -40,6 +40,8 @@ type SocketMessage struct {
 func (s Socket) Listen() {
 	// Defer closing the socket
 	defer func() {
+		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", s.conn.Id()))
+
 		s.conn.Disconnect()
 	}()
 
@@ -47,10 +49,13 @@ func (s Socket) Listen() {
 	for {
 		select {
 		case data, ok := <-s.send:
-			if ok {
-				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
-				s.conn.Emit(data.event, data.message)
+			if !ok {
+				log.Println(WARNING, "socket:", fmt.Sprintf("Server closed %s channel", s.conn.Id()))
+				return
 			}
+
+			log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
+			s.conn.Emit(data.event, data.message)
 		}
 	}
 }

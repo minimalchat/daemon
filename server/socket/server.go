@@ -76,6 +76,49 @@ func Create(ds *store.InMemory) (*Server, error) {
 	return srv, nil
 }
 
+/*
+Listen creates a new Server instance and begins listening for ws://
+connections. */
+func (s Server) Listen() {
+
+	for {
+		select {
+		case data := <-s.broadcastToClient:
+			for sock := range s.sockets {
+				if sock.conn.Id() == data.target {
+					select {
+					case sock.send <- data:
+					default:
+						close(sock.send)
+						delete(s.sockets, sock)
+					}
+				}
+			}
+		case data := <-s.broadcastToOperators:
+			for sock := range s.sockets {
+				if sock.connType == OPERATOR {
+					select {
+					case sock.send <- data:
+					default:
+						log.Println(DEBUG, "socket:", fmt.Sprintf("%s send channel not available, closing ..", sock.conn.Id()))
+						close(sock.send)
+						delete(s.sockets, sock)
+					}
+				}
+			}
+		case sock := <-s.registerOperator:
+			s.sockets[sock] = true
+		case sock := <-s.registerClient:
+			s.sockets[sock] = true
+		case sock := <-s.unregister:
+			if _, ok := s.sockets[sock]; ok {
+				delete(s.sockets, sock)
+				close(sock.send)
+			}
+		}
+	}
+}
+
 func (s *Server) onConnect(c socketio.Socket) {
 
 	var t SocketType
@@ -107,6 +150,7 @@ func (s *Server) onConnect(c socketio.Socket) {
 
 	// Register event types
 	// TODO: Do I really need to listen for both on every socket?
+
 	sock.conn.On("client:message", func(data string) {
 		go sock.onClientMessage(data)
 	})
@@ -116,7 +160,6 @@ func (s *Server) onConnect(c socketio.Socket) {
 	})
 
 	sock.conn.On("disconnection", func() {
-		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", sock.conn.Id()))
 		s.unregister <- &sock
 	})
 
@@ -140,48 +183,6 @@ func (s *Server) onConnect(c socketio.Socket) {
 		break
 	default:
 		log.Println(ERROR, "socket:", "Unknown connection type specified")
-	}
-}
-
-/*
-Listen creates a new Server instance and begins listening for ws://
-connections. */
-func (s Server) Listen() {
-
-	for {
-		select {
-		case data := <-s.broadcastToClient:
-			for sock := range s.sockets {
-				if sock.conn.Id() == data.target {
-					select {
-					case sock.send <- data:
-					default:
-						close(sock.send)
-						delete(s.sockets, sock)
-					}
-				}
-			}
-		case data := <-s.broadcastToOperators:
-			for sock := range s.sockets {
-				if sock.connType == OPERATOR {
-					select {
-					case sock.send <- data:
-					default:
-						close(sock.send)
-						delete(s.sockets, sock)
-					}
-				}
-			}
-		case sock := <-s.registerOperator:
-			s.sockets[sock] = true
-		case sock := <-s.registerClient:
-			s.sockets[sock] = true
-		case sock := <-s.unregister:
-			if _, ok := s.sockets[sock]; ok {
-				delete(s.sockets, sock)
-				close(sock.send)
-			}
-		}
 	}
 }
 
