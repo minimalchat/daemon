@@ -34,6 +34,8 @@ type configuration struct {
 	IP       string
 	Port     int
 	Host     string
+
+	CORSOrigin string
 }
 
 var config configuration
@@ -53,6 +55,7 @@ func init() {
 	// Configuration
 	flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
 	flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
+	flag.StringVar(&config.CORSOrigin, "cors-origin", "localhost", "Host to allow cross origin resource sharing (CORS)")
 	flag.BoolVar(&needHelp, "h", false, "Get help")
 }
 
@@ -84,7 +87,7 @@ func main() {
 
 	// Socket.io handler
 	server.Router.HandlerFunc("GET", "/socket.io/", func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		resp.Header().Set("Access-Control-Allow-Origin", fmt.Sprintf("https://%s", config.CORSOrigin))
 		resp.Header().Set("Access-Control-Allow-Credentials", "true")
 		// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
 
