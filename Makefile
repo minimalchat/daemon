@@ -40,7 +40,7 @@ compile:
 	$(GO_CMD) build -o $(DIST)/daemon
 
 docker: compile
-	$(DOCKER_CMD) build -t mnml-daemon $(SRC)
+	$(DOCKER_CMD) build -t minimalchat/daemon $(SRC)
 
 go:
 	cd $(SRC)
