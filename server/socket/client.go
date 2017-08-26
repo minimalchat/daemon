@@ -54,7 +54,13 @@ func (s Socket) Listen() {
 				return
 			}
 
-			log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
+			if data.message == "" {
+				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s", data.event, s.conn.Id()))
+
+			} else {
+				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
+			}
+
 			s.conn.Emit(data.event, data.message)
 		}
 	}
@@ -113,6 +119,26 @@ func (s Socket) onClientMessage(data string) {
 	s.server.broadcastToOperators <- &SocketMessage{
 		event:   "client:message",
 		message: data,
+		target:  "",
+	}
+}
+
+func (s Socket) onClientTyping() {
+	// Create message to pass so the operator knows who is typing
+	msg := chat.CreateMessage()
+	msg.Content = ""
+	msg.Author = s.conn.Id()
+	msg.Chat = s.conn.Id()
+
+	msgJson, _ := json.Marshal(msg)
+	var buffer bytes.Buffer
+	buffer.Write(msgJson)
+
+	log.Println(DEBUG, "client", fmt.Sprintf("%s: typing ...", s.conn.Id()))
+
+	s.server.broadcastToOperators <- &SocketMessage{
+		event:   "client:typing",
+		message: buffer.String(),
 		target:  "",
 	}
 }

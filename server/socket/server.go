@@ -155,6 +155,10 @@ func (s *Server) onConnect(c socketio.Socket) {
 		go sock.onClientMessage(data)
 	})
 
+	sock.conn.On("client:typing", func(data string) {
+		go sock.onClientTyping()
+	})
+
 	sock.conn.On("operator:message", func(data string) {
 		go sock.onOperatorMessage(data)
 	})

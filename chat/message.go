@@ -3,9 +3,32 @@ package chat
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 )
+
+/*
+Create constructs a new `Message` with a default timestamp of now */
+func CreateMessage() *Message {
+	now := time.Now()
+
+	// Get the unix timestamp (seconds since epoch)
+	seconds := now.Unix()
+	nanos := int32(now.Sub(time.Unix(seconds, 0)))
+
+	ts := &timestamp.Timestamp{
+		Seconds: seconds,
+		Nanos:   nanos,
+	}
+
+	m := Message{
+		Timestamp: ts,
+	}
+
+	return &m
+}
 
 func (m *Message) UnmarshalJSON(data []byte) error {
 	u := jsonpb.Unmarshaler{}
