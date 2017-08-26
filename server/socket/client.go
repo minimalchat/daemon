@@ -123,22 +123,17 @@ func (s Socket) onClientMessage(data string) {
 	}
 }
 
-func (s Socket) onClientTyping() {
-	// Create message to pass so the operator knows who is typing
-	msg := chat.CreateMessage()
-	msg.Content = ""
-	msg.Author = s.conn.Id()
-	msg.Chat = s.conn.Id()
+func (s Socket) onClientTyping(data string) {
+	// Create message from JSON
+	var msg chat.Message
 
-	msgJson, _ := json.Marshal(msg)
-	var buffer bytes.Buffer
-	buffer.Write(msgJson)
+	json.Unmarshal([]byte(data), &msg)
 
 	log.Println(DEBUG, "client", fmt.Sprintf("%s: typing ...", s.conn.Id()))
 
 	s.server.broadcastToOperators <- &SocketMessage{
 		event:   "client:typing",
-		message: buffer.String(),
+		message: data,
 		target:  "",
 	}
 }
@@ -170,6 +165,21 @@ func (s Socket) onOperatorMessage(data string) {
 
 	s.server.broadcastToClient <- &SocketMessage{
 		event:   "operator:message",
+		message: data,
+		target:  msg.Chat,
+	}
+}
+
+func (s Socket) onOperatorTyping(data string) {
+	// Create message from JSON
+	var msg chat.Message
+
+	json.Unmarshal([]byte(data), &msg)
+
+	log.Println(DEBUG, "operator", fmt.Sprintf("%s: typing ...", s.conn.Id()))
+
+	s.server.broadcastToClient <- &SocketMessage{
+		event:   "operator:typing",
 		message: data,
 		target:  msg.Chat,
 	}
