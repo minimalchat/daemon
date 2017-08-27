@@ -10,7 +10,7 @@ import (
 )
 
 /*
-Create constructs a new `Message` with a default timestamp of now */
+CreateMessage constructs a new `Message` with a default timestamp of now */
 func CreateMessage() *Message {
 	now := time.Now()
 
