@@ -54,7 +54,13 @@ func (s Socket) Listen() {
 				return
 			}
 
-			log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
+			if data.message == "" {
+				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s", data.event, s.conn.Id()))
+
+			} else {
+				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
+			}
+
 			s.conn.Emit(data.event, data.message)
 		}
 	}
@@ -117,6 +123,21 @@ func (s Socket) onClientMessage(data string) {
 	}
 }
 
+func (s Socket) onClientTyping(data string) {
+	// Create message from JSON
+	var msg chat.Message
+
+	json.Unmarshal([]byte(data), &msg)
+
+	log.Println(DEBUG, "client", fmt.Sprintf("%s: typing ...", s.conn.Id()))
+
+	s.server.broadcastToOperators <- &SocketMessage{
+		event:   "client:typing",
+		message: data,
+		target:  "",
+	}
+}
+
 // Operator Functions
 
 func (s Socket) onOperatorConnection() {
@@ -144,6 +165,21 @@ func (s Socket) onOperatorMessage(data string) {
 
 	s.server.broadcastToClient <- &SocketMessage{
 		event:   "operator:message",
+		message: data,
+		target:  msg.Chat,
+	}
+}
+
+func (s Socket) onOperatorTyping(data string) {
+	// Create message from JSON
+	var msg chat.Message
+
+	json.Unmarshal([]byte(data), &msg)
+
+	log.Println(DEBUG, "operator", fmt.Sprintf("%s: typing ...", s.conn.Id()))
+
+	s.server.broadcastToClient <- &SocketMessage{
+		event:   "operator:typing",
 		message: data,
 		target:  msg.Chat,
 	}
