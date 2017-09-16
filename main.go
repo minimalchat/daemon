@@ -35,6 +35,9 @@ type configuration struct {
 	Port     int
 	Host     string
 
+	SSLCertFile string
+	SSLKeyFile  string
+
 	CORSOrigin string
 }
 
@@ -53,6 +56,8 @@ func help() {
 
 func init() {
 	// Configuration
+	flag.StringVar(&config.SSLCertFile, "ssl-cert", "", "SSL Certificate Filepath")
+	flag.StringVar(&config.SSLKeyFile, "ssl-key", "", "SSL Key Filepath")
 	flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
 	flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
 	flag.StringVar(&config.CORSOrigin, "cors-origin", "http://localhost:3000", "Host to allow cross origin resource sharing (CORS)")
@@ -96,5 +101,9 @@ func main() {
 
 	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))
 
-	log.Fatal(http.ListenAndServe(config.Host, server.Router))
+	if config.SSLCertFile != "" && config.SSLKeyFile != "" {
+		log.Fatal(http.ListenAndServeTLS(config.Host, config.SSLCertFile, config.SSLKeyFile, server.Router))
+	} else {
+		log.Fatal(http.ListenAndServe(config.Host, server.Router))
+	}
 }
