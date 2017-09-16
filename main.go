@@ -31,12 +31,12 @@ const (
 // Configuration object
 type configuration struct {
 	Protocol string
-	IP       string
 	Port     int
 	Host     string
 
 	SSLCertFile string
 	SSLKeyFile  string
+	SSLPort     int
 
 	CORSOrigin string
 }
@@ -45,9 +45,9 @@ var config configuration
 var needHelp bool
 
 func help() {
-	fmt.Println("mnml-daemon live chat API daemon")
+	fmt.Println("Minimal Chat live chat API/Socket daemon")
 	fmt.Println()
-	fmt.Println("Find more information at https://github.com/minimalchat/mnml-daemon")
+	fmt.Println("Find more information at https://github.com/minimalchat/daemon")
 	fmt.Println()
 
 	fmt.Println("Flags:")
@@ -58,8 +58,9 @@ func init() {
 	// Configuration
 	flag.StringVar(&config.SSLCertFile, "ssl-cert", "", "SSL Certificate Filepath")
 	flag.StringVar(&config.SSLKeyFile, "ssl-key", "", "SSL Key Filepath")
-	flag.IntVar(&config.Port, "port", 8000, "Port used to serve http and websocket traffic on")
-	flag.StringVar(&config.IP, "host", "localhost", "IP to serve http and websocket traffic on")
+	flag.IntVar(&config.SSLPort, "ssl-port", 443, "Port used to serve SSL HTTPS and websocket traffic on")
+	flag.IntVar(&config.Port, "port", 80, "Port used to serve HTTP and websocket traffic on")
+	flag.StringVar(&config.Host, "host", "localhost", "IP to serve http and websocket traffic on")
 	flag.StringVar(&config.CORSOrigin, "cors-origin", "http://localhost:3000", "Host to allow cross origin resource sharing (CORS)")
 	flag.BoolVar(&needHelp, "h", false, "Get help")
 }
@@ -74,7 +75,7 @@ func main() {
 		return
 	}
 
-	config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
+	// config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
 
 	db := new(store.InMemory)
 
@@ -88,7 +89,7 @@ func main() {
 	go sock.Listen()
 
 	// Server
-	server := rest.Listen(config.IP, config.Port, db)
+	server := rest.Listen(db)
 
 	// Socket.io handler
 	server.Router.HandlerFunc("GET", "/socket.io/", func(resp http.ResponseWriter, req *http.Request) {
@@ -99,11 +100,12 @@ func main() {
 		sock.ServeHTTP(resp, req)
 	})
 
-	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s ...", config.Host))
-
+	// Serve SSL/HTTPS if we can
 	if config.SSLCertFile != "" && config.SSLKeyFile != "" {
-		log.Fatal(http.ListenAndServeTLS(config.Host, config.SSLCertFile, config.SSLKeyFile, server.Router))
-	} else {
-		log.Fatal(http.ListenAndServe(config.Host, server.Router))
+		log.Println(INFO, "server:", fmt.Sprintf("Listening for SSL on %s:%d ...", config.Host, config.SSLPort))
+		go http.ListenAndServeTLS(fmt.Sprintf("%s:%d", config.Host, config.SSLPort), config.SSLCertFile, config.SSLKeyFile, server.Router)
 	}
+
+	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s:%d ...", config.Host, config.Port))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Host, config.Port), server.Router))
 }

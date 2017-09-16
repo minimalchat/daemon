@@ -29,7 +29,7 @@ type Server struct {
 
 /*
 Listen starts listening on `port` and `host` */
-func Listen(host string, port int, ds *store.InMemory) *Server {
+func Listen(ds *store.InMemory) *Server {
 	s := Server{
 		Router: httprouter.New(),
 	}
