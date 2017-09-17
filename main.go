@@ -38,7 +38,8 @@ type configuration struct {
 	SSLKeyFile  string
 	SSLPort     int
 
-	CORSOrigin string
+	CORSOrigin  string
+	CORSEnabled bool
 }
 
 var config configuration
@@ -62,6 +63,7 @@ func init() {
 	flag.IntVar(&config.Port, "port", 8000, "Port used to serve HTTP and websocket traffic on")
 	flag.StringVar(&config.Host, "host", "localhost", "IP to serve http and websocket traffic on")
 	flag.StringVar(&config.CORSOrigin, "cors-origin", "http://localhost:3000", "Host to allow cross origin resource sharing (CORS)")
+	flag.BoolVar(&config.CORSEnabled, "cors", false, "Set if the daemon will handle CORS")
 	flag.BoolVar(&needHelp, "h", false, "Get help")
 }
 
@@ -92,11 +94,16 @@ func main() {
 	server := rest.Listen(db)
 
 	// Socket.io handler
-	log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", config.CORSOrigin))
+	if config.CORSEnabled {
+		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", config.CORSOrigin))
+	}
+
 	server.Router.HandlerFunc("GET", "/socket.io/", func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Set("Access-Control-Allow-Origin", config.CORSOrigin)
-		resp.Header().Set("Access-Control-Allow-Credentials", "true")
-		// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
+		if config.CORSEnabled {
+			resp.Header().Set("Access-Control-Allow-Origin", config.CORSOrigin)
+			resp.Header().Set("Access-Control-Allow-Credentials", "true")
+			// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
+		}
 
 		sock.ServeHTTP(resp, req)
 	})
