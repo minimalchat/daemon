@@ -58,8 +58,8 @@ func init() {
 	// Configuration
 	flag.StringVar(&config.SSLCertFile, "ssl-cert", "", "SSL Certificate Filepath")
 	flag.StringVar(&config.SSLKeyFile, "ssl-key", "", "SSL Key Filepath")
-	flag.IntVar(&config.SSLPort, "ssl-port", 443, "Port used to serve SSL HTTPS and websocket traffic on")
-	flag.IntVar(&config.Port, "port", 80, "Port used to serve HTTP and websocket traffic on")
+	flag.IntVar(&config.SSLPort, "ssl-port", 4443, "Port used to serve SSL HTTPS and websocket traffic on")
+	flag.IntVar(&config.Port, "port", 8000, "Port used to serve HTTP and websocket traffic on")
 	flag.StringVar(&config.Host, "host", "localhost", "IP to serve http and websocket traffic on")
 	flag.StringVar(&config.CORSOrigin, "cors-origin", "http://localhost:3000", "Host to allow cross origin resource sharing (CORS)")
 	flag.BoolVar(&needHelp, "h", false, "Get help")
@@ -92,6 +92,7 @@ func main() {
 	server := rest.Listen(db)
 
 	// Socket.io handler
+	log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", config.CORSOrigin))
 	server.Router.HandlerFunc("GET", "/socket.io/", func(resp http.ResponseWriter, req *http.Request) {
 		resp.Header().Set("Access-Control-Allow-Origin", config.CORSOrigin)
 		resp.Header().Set("Access-Control-Allow-Credentials", "true")
