@@ -49,4 +49,4 @@ docker: compile
 
 go:
 	cd $(SRC)
-	$(GO_CMD) run main.go
+	$(GO_CMD) run main.go -cors
