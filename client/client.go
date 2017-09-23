@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
@@ -11,27 +10,22 @@ import (
 
 /*
 Create builds a new `Client` */
-func Create(id string) *Client {
+func Create(sid string) *Client {
 	c := Client{
 		FirstName: "Site",
 		LastName:  "Visitor",
 		Name:      "Site Visitor",
 	}
 
-	if id == "" {
-		log.Println(WARNING, "No client ID specified")
+	// Generate Client UID
+	uuid, _ := uuid.NewRandom()
+	c.Uid = uuid.String()
 
-		uuid, _ := uuid.NewRandom()
-
-		c.Uid = uuid.String()
-	} else {
-		c.Uid = id
-	}
+	// Assign Client SID
+	c.Sid = sid
 
 	return &c
 }
-
-// func UnmarshalJSON
 
 func (c *Client) GetFullName() string {
 	if c != nil {

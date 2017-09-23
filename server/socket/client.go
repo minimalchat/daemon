@@ -11,6 +11,7 @@ import (
 	"github.com/minimalchat/daemon/chat"
 	"github.com/minimalchat/daemon/client"
 	"github.com/minimalchat/daemon/operator"
+	"github.com/minimalchat/daemon/store" // InMemory Database
 )
 
 type SocketType string
@@ -68,27 +69,74 @@ func (s Socket) Listen() {
 
 // Client Functions
 
-func (s Socket) onClientConnection() {
-	// Create Client Object
-	cl := client.Create(s.conn.Id())
+func (s Socket) onClientConnection(sessionId string) {
 
-	// Save Client Object to Data Store
-	s.server.store.Put(cl)
+	var cl *client.Client
+	var ch *chat.Chat
+	var storeBuffer store.StoreKeyer
+	var event string
 
-	// Create Chat Object
-	ch := chat.Create(cl)
+	// Get all Clients
+	storeBuffer, _ = s.server.store.Get(fmt.Sprintf("client.%s", sessionId))
 
-	// Save Chat Object to Data Store
-	s.server.store.Put(ch)
+	if storeBuffer != nil {
+		// Hijack Client object with new Socket ID
+		cl = &client.Client{
+			FirstName: storeBuffer.(*client.Client).FirstName,
+			LastName:  storeBuffer.(*client.Client).LastName,
+			Name:      storeBuffer.(*client.Client).Name,
+			Uid:       storeBuffer.(*client.Client).Uid,
+			Sid:       s.conn.Id(),
+		}
+	}
 
-	// Convert to JSON
+	if cl == nil {
+		// Create Client Object
+		cl = client.Create(s.conn.Id())
+
+		// Save Client Object to Data Store
+		s.server.store.Put(cl)
+
+		// Create Chat Object
+		ch = chat.Create(cl)
+
+		// Save Chat Object to Data Store
+		s.server.store.Put(ch)
+
+		event = "chat:new"
+	} else {
+		// Save Client Object to Data Store with updated Sid
+		s.server.store.Put(cl)
+
+		// Get Chat Object
+		storeBuffer, _ = s.server.store.Get(fmt.Sprintf("chat.%s", cl.Uid))
+
+		// Hijack the Chat Object
+		ch = &chat.Chat{
+			CreationTime: storeBuffer.(*chat.Chat).CreationTime,
+			// TODO: Update UpdatedTime to now
+			UpdatedTime: storeBuffer.(*chat.Chat).UpdatedTime,
+			Open:        storeBuffer.(*chat.Chat).Open,
+			Uid:         storeBuffer.(*chat.Chat).Uid,
+			Client:      cl,
+		}
+
+		// Save Chat Object to Data Store with updated Client
+		s.server.store.Put(ch)
+
+		event = "chat:existing"
+
+		log.Println(INFO, "socket:", "EXISTING CLIENTELLL")
+	}
+
+	// Convert Chat to JSON
 	chJson, _ := json.Marshal(ch)
 	var buffer bytes.Buffer
 	buffer.Write(chJson)
 	// buffer.WriteString("\n")
 
 	sm := SocketMessage{
-		event:   "chat:new",
+		event:   event,
 		message: buffer.String(),
 		target:  "",
 	}
@@ -159,14 +207,30 @@ func (s Socket) onOperatorMessage(data string) {
 	// Save Message to Data Store
 	s.server.store.Put(msg)
 
-	// TODO:
-	// Update Chat Object
-	// Save Chat Object to Data Store?
+	// TODO: Update Chat Object?
+	// TODO: Save Chat Object to Data Store?
+
+	storeBuffer, _ := s.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
+
+	if storeBuffer == nil {
+		log.Println(ERROR, "operator:", fmt.Sprintf("Client %s does not exist!", msg.Chat))
+		return
+	}
+
+	// TODO: This could be better, seems kinda hacky
+	// Hijack the Client object we need to message to
+	cl := &client.Client{
+		FirstName: storeBuffer.(*client.Client).FirstName,
+		LastName:  storeBuffer.(*client.Client).LastName,
+		Name:      storeBuffer.(*client.Client).Name,
+		Uid:       storeBuffer.(*client.Client).Uid,
+		Sid:       storeBuffer.(*client.Client).Sid,
+	}
 
 	s.server.broadcastToClient <- &SocketMessage{
 		event:   "operator:message",
 		message: data,
-		target:  msg.Chat,
+		target:  cl.Sid,
 	}
 }
 
@@ -178,9 +242,26 @@ func (s Socket) onOperatorTyping(data string) {
 
 	log.Println(DEBUG, "operator", fmt.Sprintf("%s: typing ...", s.conn.Id()))
 
+	storeBuffer, _ := s.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
+
+	if storeBuffer == nil {
+		log.Println(ERROR, "operator:", fmt.Sprintf("Client %s does not exist!", msg.Chat))
+		return
+	}
+
+	// TODO: This could be better, seems kinda hacky
+	// Hijack the Client object we need to message to
+	cl := &client.Client{
+		FirstName: storeBuffer.(*client.Client).FirstName,
+		LastName:  storeBuffer.(*client.Client).LastName,
+		Name:      storeBuffer.(*client.Client).Name,
+		Uid:       storeBuffer.(*client.Client).Uid,
+		Sid:       storeBuffer.(*client.Client).Sid,
+	}
+
 	s.server.broadcastToClient <- &SocketMessage{
 		event:   "operator:typing",
 		message: data,
-		target:  msg.Chat,
+		target:  cl.Sid,
 	}
 }

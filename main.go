@@ -6,17 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	// "github.com/julienschmidt/httprouter" // Http router
-	// "github.com/googollee/go-socket.io" // Socket
-
-	// "github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
-
 	"github.com/minimalchat/daemon/server/rest"
-	"github.com/minimalchat/daemon/server/socket"
 	"github.com/minimalchat/daemon/store"
-	// "github.com/minimalchat/daemon/operator"
-	// "github.com/minimalchat/daemon/client"
-	// "github.com/minimalchat/daemon/chat"
 )
 
 // Log levels
@@ -28,21 +19,7 @@ const (
 	FATAL   string = "FATAL"
 )
 
-// Configuration object
-type configuration struct {
-	Protocol string
-	Port     int
-	Host     string
-
-	SSLCertFile string
-	SSLKeyFile  string
-	SSLPort     int
-
-	CORSOrigin  string
-	CORSEnabled bool
-}
-
-var config configuration
+var config rest.ServerConfig
 var needHelp bool
 
 func help() {
@@ -77,36 +54,11 @@ func main() {
 		return
 	}
 
-	// config.Host = fmt.Sprintf("%s:%d", config.IP, config.Port)
-
+	// Create DataStore
 	db := new(store.InMemory)
 
-	// Socket.io
-	sock, err := socket.Create(db)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	go sock.Listen()
-
 	// Server
-	server := rest.Listen(db)
-
-	// Socket.io handler
-	if config.CORSEnabled {
-		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", config.CORSOrigin))
-	}
-
-	server.Router.HandlerFunc("GET", "/socket.io/", func(resp http.ResponseWriter, req *http.Request) {
-		if config.CORSEnabled {
-			resp.Header().Set("Access-Control-Allow-Origin", config.CORSOrigin)
-			resp.Header().Set("Access-Control-Allow-Credentials", "true")
-			// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
-		}
-
-		sock.ServeHTTP(resp, req)
-	})
+	server := rest.Initialize(db, config)
 
 	// Serve SSL/HTTPS if we can
 	if config.SSLCertFile != "" && config.SSLKeyFile != "" {
@@ -115,5 +67,5 @@ func main() {
 	}
 
 	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s:%d ...", config.Host, config.Port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Host, config.Port), server.Router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Host, config.Port), server))
 }
