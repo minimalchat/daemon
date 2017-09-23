@@ -78,5 +78,6 @@ func defaultRedirectRoute(resp http.ResponseWriter, req *http.Request, params ht
 func defaultRoute(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	resp.WriteHeader(http.StatusOK)
+	// TODO: Make this less hacky?
 	fmt.Fprint(resp, "{\"clients\": \"/api/clients\", \"client\": \"/api/client/:id\", \"chats\":\"/api/chats\", \"chat\":\"/api/chat/:id\", \"messages\":\"/api/chat/:id/messages\", \"message\":\"/api/chat/:id/message/:mid\", \"operators\":\"/api/operators\", \"operators\":\"/api/operators\", \"operator\":\"/api/operator/:id\"}")
 }

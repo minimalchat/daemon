@@ -123,12 +123,19 @@ func (s *Server) onConnect(c socketio.Socket) {
 
 	var t SocketType
 
+	query := c.Request().URL.Query()
+	connectionType := query.Get("type")
+	sessionId := query.Get("sessionId")
+
 	// Identify the connection type
-	if c.Request().URL.Query().Get("type") == "client" {
+	switch connectionType {
+	case "client":
 		t = CLIENT
-	} else if c.Request().URL.Query().Get("type") == "operator" {
+		break
+	case "operator":
 		t = OPERATOR
-	} else {
+		break
+	default:
 		log.Println(WARNING, "socket:", "Unknown connection type, dropping ...")
 		return
 	}
@@ -186,7 +193,7 @@ func (s *Server) onConnect(c socketio.Socket) {
 		s.registerClient <- &sock
 
 		// TODO: This may not be the right name for this func now
-		go sock.onClientConnection()
+		go sock.onClientConnection(sessionId)
 
 		break
 	default:

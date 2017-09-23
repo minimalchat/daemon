@@ -6,4 +6,5 @@ message Client {
   string last_name = 2 [json_name="last_name"];
   string name = 3 [json_name="name"];
   string uid = 4 [json_name="id"];
+  string sid = 5 [json_name="sid"];
 }

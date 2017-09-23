@@ -34,6 +34,11 @@ coverage:
 clean:
 	rm -rf $(DIST)/mnml-daemon
 
+protob-gen:
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mclient/client.proto=github.com/minimalchat/daemon/client:. client/*.proto
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mclient/client.proto=github.com/minimalchat/daemon/client:. chat/*.proto
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mclient/client.proto=github.com/minimalchat/daemon/client:. operator/*.proto
+
 compile:
 	mkdir -p $(DIST)
 	cd $(SRC)

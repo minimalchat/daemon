@@ -11,6 +11,7 @@ import (
 	"github.com/minimalchat/daemon/chat"
 	"github.com/minimalchat/daemon/client"
 	"github.com/minimalchat/daemon/operator"
+	"github.com/minimalchat/daemon/store" // InMemory Database
 )
 
 type SocketType string
@@ -68,27 +69,96 @@ func (s Socket) Listen() {
 
 // Client Functions
 
-func (s Socket) onClientConnection() {
-	// Create Client Object
-	cl := client.Create(s.conn.Id())
+func (s Socket) onClientConnection(sessionId string) {
 
-	// Save Client Object to Data Store
-	s.server.store.Put(cl)
+	var cl *client.Client
+	var ch *chat.Chat
+	var storeBuffer store.StoreKeyer
+	var event string
 
-	// Create Chat Object
-	ch := chat.Create(cl)
+	// Get all Clients
+	storeBuffer, _ = s.server.store.Get(fmt.Sprintf("client.%s", sessionId))
 
-	// Save Chat Object to Data Store
-	s.server.store.Put(ch)
+	if storeBuffer != nil {
+		// Hijack Client object with new Socket ID
+		cl = &client.Client{
+			FirstName: storeBuffer.(*client.Client).FirstName,
+			LastName:  storeBuffer.(*client.Client).LastName,
+			Name:      storeBuffer.(*client.Client).Name,
+			Uid:       storeBuffer.(*client.Client).Uid,
+			Sid:       s.conn.Id(),
+		}
+	}
 
-	// Convert to JSON
+	// TODO: This could be done better, maybe more tooling around InMemory
+	//	store, maybe abstract loop out into function? Only time will
+	//	tell ...
+
+	// Search for sessionId
+	/*
+		for i := range clList {
+			log.Println(DEBUG, "socket:", fmt.Sprintf("Is %s the same as our sessionId %s", clList[i].(*client.Client).Sid, sessionId))
+			if clList[i].(*client.Client).Sid == sessionId {
+				// Hijack Client object with new Socket ID
+				cl = &client.Client{
+					FirstName: clList[i].(*client.Client).FirstName,
+					LastName:  clList[i].(*client.Client).LastName,
+					Name:      clList[i].(*client.Client).Name,
+					Uid:       clList[i].(*client.Client).Uid,
+					Sid:       s.conn.Id(),
+				}
+				break
+			}
+		}
+	*/
+
+	if cl == nil {
+		// Create Client Object
+		cl = client.Create(s.conn.Id())
+
+		// Save Client Object to Data Store
+		s.server.store.Put(cl)
+
+		// Create Chat Object
+		ch = chat.Create(cl)
+
+		// Save Chat Object to Data Store
+		s.server.store.Put(ch)
+
+		event = "chat:new"
+	} else {
+		// Save Client Object to Data Store with updated Sid
+		s.server.store.Put(cl)
+
+		// Get Chat Object
+		storeBuffer, _ = s.server.store.Get(fmt.Sprintf("chat.%s", cl.Uid))
+
+		// Hijack the Chat Object
+		ch = &chat.Chat{
+			CreationTime: storeBuffer.(*chat.Chat).CreationTime,
+			// TODO: Update UpdatedTime to now
+			UpdatedTime: storeBuffer.(*chat.Chat).UpdatedTime,
+			Open:        storeBuffer.(*chat.Chat).Open,
+			Uid:         storeBuffer.(*chat.Chat).Uid,
+			Client:      cl,
+		}
+
+		// Save Chat Object to Data Store with updated Client
+		s.server.store.Put(ch)
+
+		event = "chat:existing"
+
+		log.Println(INFO, "socket:", "EXISTING CLIENTELLL")
+	}
+
+	// Convert Chat to JSON
 	chJson, _ := json.Marshal(ch)
 	var buffer bytes.Buffer
 	buffer.Write(chJson)
 	// buffer.WriteString("\n")
 
 	sm := SocketMessage{
-		event:   "chat:new",
+		event:   event,
 		message: buffer.String(),
 		target:  "",
 	}
