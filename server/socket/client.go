@@ -90,28 +90,6 @@ func (s Socket) onClientConnection(sessionId string) {
 		}
 	}
 
-	// TODO: This could be done better, maybe more tooling around InMemory
-	//	store, maybe abstract loop out into function? Only time will
-	//	tell ...
-
-	// Search for sessionId
-	/*
-		for i := range clList {
-			log.Println(DEBUG, "socket:", fmt.Sprintf("Is %s the same as our sessionId %s", clList[i].(*client.Client).Sid, sessionId))
-			if clList[i].(*client.Client).Sid == sessionId {
-				// Hijack Client object with new Socket ID
-				cl = &client.Client{
-					FirstName: clList[i].(*client.Client).FirstName,
-					LastName:  clList[i].(*client.Client).LastName,
-					Name:      clList[i].(*client.Client).Name,
-					Uid:       clList[i].(*client.Client).Uid,
-					Sid:       s.conn.Id(),
-				}
-				break
-			}
-		}
-	*/
-
 	if cl == nil {
 		// Create Client Object
 		cl = client.Create(s.conn.Id())
@@ -229,14 +207,30 @@ func (s Socket) onOperatorMessage(data string) {
 	// Save Message to Data Store
 	s.server.store.Put(msg)
 
-	// TODO:
-	// Update Chat Object
-	// Save Chat Object to Data Store?
+	// TODO: Update Chat Object?
+	// TODO: Save Chat Object to Data Store?
+
+	storeBuffer, _ := s.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
+
+	if storeBuffer == nil {
+		log.Println(ERROR, "operator:", fmt.Sprintf("Client %s does not exist!", msg.Chat))
+		return
+	}
+
+	// TODO: This could be better, seems kinda hacky
+	// Hijack the Client object we need to message to
+	cl := &client.Client{
+		FirstName: storeBuffer.(*client.Client).FirstName,
+		LastName:  storeBuffer.(*client.Client).LastName,
+		Name:      storeBuffer.(*client.Client).Name,
+		Uid:       storeBuffer.(*client.Client).Uid,
+		Sid:       storeBuffer.(*client.Client).Sid,
+	}
 
 	s.server.broadcastToClient <- &SocketMessage{
 		event:   "operator:message",
 		message: data,
-		target:  msg.Chat,
+		target:  cl.Sid,
 	}
 }
 
@@ -248,9 +242,26 @@ func (s Socket) onOperatorTyping(data string) {
 
 	log.Println(DEBUG, "operator", fmt.Sprintf("%s: typing ...", s.conn.Id()))
 
+	storeBuffer, _ := s.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
+
+	if storeBuffer == nil {
+		log.Println(ERROR, "operator:", fmt.Sprintf("Client %s does not exist!", msg.Chat))
+		return
+	}
+
+	// TODO: This could be better, seems kinda hacky
+	// Hijack the Client object we need to message to
+	cl := &client.Client{
+		FirstName: storeBuffer.(*client.Client).FirstName,
+		LastName:  storeBuffer.(*client.Client).LastName,
+		Name:      storeBuffer.(*client.Client).Name,
+		Uid:       storeBuffer.(*client.Client).Uid,
+		Sid:       storeBuffer.(*client.Client).Sid,
+	}
+
 	s.server.broadcastToClient <- &SocketMessage{
 		event:   "operator:typing",
 		message: data,
-		target:  msg.Chat,
+		target:  cl.Sid,
 	}
 }
