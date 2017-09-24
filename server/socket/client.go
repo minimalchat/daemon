@@ -125,8 +125,6 @@ func (s Socket) onClientConnection(sessionId string) {
 		s.server.store.Put(ch)
 
 		event = "chat:existing"
-
-		log.Println(INFO, "socket:", "EXISTING CLIENTELLL")
 	}
 
 	// Convert Chat to JSON

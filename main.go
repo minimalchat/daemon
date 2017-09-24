@@ -63,7 +63,7 @@ func main() {
 	// Serve SSL/HTTPS if we can
 	if config.SSLCertFile != "" && config.SSLKeyFile != "" {
 		log.Println(INFO, "server:", fmt.Sprintf("Listening for SSL on %s:%d ...", config.Host, config.SSLPort))
-		go http.ListenAndServeTLS(fmt.Sprintf("%s:%d", config.Host, config.SSLPort), config.SSLCertFile, config.SSLKeyFile, server.Router)
+		go http.ListenAndServeTLS(fmt.Sprintf("%s:%d", config.Host, config.SSLPort), config.SSLCertFile, config.SSLKeyFile, server)
 	}
 
 	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s:%d ...", config.Host, config.Port))

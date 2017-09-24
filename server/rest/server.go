@@ -87,6 +87,12 @@ func Initialize(ds *store.InMemory, config ServerConfig) *Server {
 	go sock.Listen()
 
 	s.Router.HandlerFunc("GET", "/socket.io/", func(w http.ResponseWriter, r *http.Request) {
+		if s.Config.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", s.Config.CORSOrigin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
+		}
+
 		sock.ServeHTTP(w, r)
 	})
 
