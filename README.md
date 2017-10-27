@@ -18,26 +18,37 @@ Minimal Chat daemon is the central server providing API endpoints for operator e
 
 ### Installation
 
-Download the prebuilt binaries available in the [releases]() section or clone the repo and build using Go `>=1.6`.
+Download the prebuilt binaries available in the [releases](https://github.com/minimalchat/daemon/releases) section or clone the repo and build using Go `>=1.6`.
 
 ```
-> curl -L https://github.com/minimalchat/daemon/releases/download/v1.0.0/mnml.tar.gz
-> tar -zxvf mnml.tar.gz
-> cd mnml/bin
-> mnml -host 0.0.0.0 -port 8080
+> curl -L https://github.com/minimalchat/daemon/releases/download/v0.2.0/daemon-v0.2.0 -o daemon
+> chmod +x ./daemon
+> ./daemon -host 0.0.0.0 -port 8080
 ```
 
 ### Usage
 
 ```
 > daemon
-mnml-daemon runs the socket and API daemon
+Minimal Chat live chat API/Socket daemon
 
-Find more information at https://github.com/minimalchat/mnml-daemon
+Find more information at https://github.com/minimalchat/daemon
 
 Flags:
-  -host address
-        The address to which serve socket and API requests on
-  -port number
-        The port number to use in conjunction with the host address
+  -cors
+    	Set if the daemon will handle CORS
+  -cors-origin string
+    	Host to allow cross origin resource sharing (CORS) (default "http://localhost:3000")
+  -h	Get help
+  -host string
+    	IP to serve http and websocket traffic on (default "localhost")
+  -port int
+    	Port used to serve HTTP and websocket traffic on (default 8000)
+  -ssl-cert string
+    	SSL Certificate Filepath
+  -ssl-key string
+    	SSL Key Filepath
+  -ssl-port int
+    	Port used to serve SSL HTTPS and websocket traffic on (default 4443)
+
 ```
