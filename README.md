@@ -16,6 +16,9 @@ Minimal Chat is:
 
 Minimal Chat daemon is the central server providing API endpoints for operator extensions like Slack, IRC, etc. It also provides the socket.io endpoints that the web clients connect to when on a Minimal Chat enabled website.
 
+We're glad you're interested in contributing, feel free to create an [issue](https://github.com/minimalchat/daemon/issues/new) or pick one up but first check out our [contributing doc](https://github.com/minimalchat/daemon/blob/master/CONTRIBUTING.md) and [code of conduct](https://github.com/minimalchat/daemon/blob/master/CODE_OF_CONDUCT.md).
+
+
 ### Installation
 
 Download the prebuilt binaries available in the [releases](https://github.com/minimalchat/daemon/releases) section or clone the repo and build using Go `>=1.6`.
