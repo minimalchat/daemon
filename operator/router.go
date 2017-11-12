@@ -129,6 +129,11 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 					old.LastName = op.LastName
 				}
 
+        if op.GetEmail() != "" {
+          old.Email = op.Email
+          old.EmailHash = op.GenerateEmailHash()
+        }
+
 				// Save old record
 				ds.Put(old)
 				log.Println(DEBUG, "api/operator:", "Updating operator", old)

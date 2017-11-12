@@ -15,6 +15,8 @@ package operator
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import "crypto/md5"
+import "encoding/hex"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -32,6 +34,8 @@ type Operator struct {
 	LastName  string `protobuf:"bytes,2,opt,name=last_name" json:"last_name,omitempty"`
 	UserName  string `protobuf:"bytes,3,opt,name=user_name,json=username" json:"user_name,omitempty"`
 	Uid       string `protobuf:"bytes,4,opt,name=uid,json=id" json:"uid,omitempty"`
+	Email     string `protobuf:"bytes,5,opt,name=email" json:"email,omitempty"`
+	EmailHash string `protobuf:"bytes,6,opt,name=email_hash" json:"email_hash,omitempty"`
 }
 
 func (m *Operator) Reset()                    { *m = Operator{} }
@@ -65,6 +69,27 @@ func (m *Operator) GetUid() string {
 		return m.Uid
 	}
 	return ""
+}
+
+func (m *Operator) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+// to be used for https://en.gravatar.com
+func (m *Operator) GenerateEmailHash() string {
+	if m != nil && m.GetEmail() != "" {
+    return emailToHash(m.Email)
+	}
+	return ""
+}
+
+func emailToHash(email string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(email))
+	return fmt.Sprintf("%v", hex.EncodeToString(hasher.Sum(nil)))
 }
 
 func init() {
