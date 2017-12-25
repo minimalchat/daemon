@@ -8,5 +8,6 @@ RUN apt install -y golang
 
 COPY dist/daemon /daemon/server
 
-CMD ["/daemon/server", "--host 0.0.0.0", "--port 80"]
+ENTRYPOINT ["/daemon/server", "-host", "0.0.0.0"]
+CMD ["-port", "80"]
 
