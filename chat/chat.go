@@ -35,7 +35,7 @@ func Create(cl *client.Client) *Chat {
 	return &c
 }
 
-func (c *Chat) UnmarshaJSON(data []byte) error {
+func (c *Chat) UnmarshalJSON(data []byte) error {
 	u := jsonpb.Unmarshaler{}
 	buf := bytes.NewBuffer(data)
 
