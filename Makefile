@@ -24,12 +24,12 @@ lint:
 test:
 	cd $(SRC)
 	$(GO_CMD) test -v ./...
-	# $(GOPATH)/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+	# $(GOPATH)/bin/goveralls -coverprofile=coverage.out -service=travis-ci # -repotoken $(COVERALLS_TOKEN)
 
 coverage:
 	cd $(SRC)
 	$(GOPATH)/bin/overalls -project=$(PACKAGE) -covermode=count
-	$(GOPATH)/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+	$(GOPATH)/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci
 
 clean:
 	rm -rf $(DIST)/mnml-daemon
