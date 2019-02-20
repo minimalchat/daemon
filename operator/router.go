@@ -25,19 +25,19 @@ Routes defines the Operator API CRUD uris */
 func Routes(router *httprouter.Router, ds *store.InMemory) {
 
 	// Operator
+	// Read
 	router.GET("/api/operators", readOperators(ds)) // Check
 	router.GET("/api/operator", readOperators(ds))
 
 	router.GET("/api/operator/:id", readOperator(ds)) // Check
 
-	router.POST("/api/operator", createOrUpdateOperator(ds)) // Check
-
-	router.POST("/api/operator/", createOrUpdateOperator(ds)) // Check
-
-	router.PUT("/api/operator/:id", createOrUpdateOperator(ds)) // Check
-
+	// Create / Update
+	router.POST("/api/operator", createOrUpdateOperator(ds))      // Check
+	router.POST("/api/operator/:id", createOrUpdateOperator(ds))  // Check
+	router.PUT("/api/operator/", createOrUpdateOperator(ds))      // Check
 	router.PATCH("/api/operator/:id", createOrUpdateOperator(ds)) // Check
 
+	// Delete
 	router.DELETE("/api/operator/:id", deleteOperator(ds)) // Check
 }
 
@@ -102,9 +102,10 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 
 		if id == "" { // Create
 
+			log.Println(DEBUG, "api/operator:", "Creating new operator", op)
+
 			// Save new record
 			ds.Put(op)
-			log.Println(DEBUG, "api/operator:", "Creating new operator", op)
 
 		} else { // Update
 
@@ -118,9 +119,21 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 				return
 			}
 
-			if old, ok := result.(Operator); ok {
-
+			if old, ok := result.(*Operator); ok {
 				// Update fields of old record
+
+				if op.GetAid() != "" {
+					old.Aid = op.Aid
+				}
+
+				if op.GetAtoken() != "" {
+					old.Atoken = op.Atoken
+				}
+
+				if op.GetAvatar() != "" {
+					old.Avatar = op.Avatar
+				}
+
 				if op.GetFirstName() != "" {
 					old.FirstName = op.FirstName
 				}
@@ -129,9 +142,10 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 					old.LastName = op.LastName
 				}
 
+				log.Println(DEBUG, "api/operator:", "Updating operator", old)
+
 				// Save old record
 				ds.Put(old)
-				log.Println(DEBUG, "api/operator:", "Updating operator", old)
 			}
 		}
 

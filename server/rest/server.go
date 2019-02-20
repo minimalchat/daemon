@@ -32,7 +32,7 @@ type Server struct {
 
 type ServerConfig struct {
 	Protocol string
-	Port     int
+	Port     string
 	Host     string
 
 	SSLCertFile string

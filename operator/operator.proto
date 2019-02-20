@@ -2,8 +2,17 @@ syntax = "proto3";
 package operator;
 
 message Operator {
-  string first_name = 1 [json_name="first_name"];
-  string last_name = 2 [json_name="last_name"];
-  string user_name = 3 [json_name="username"];
+  string firstName = 1 [json_name="first_name"];
+  string lastName = 2 [json_name="last_name"];
+
+  // Access ID and Access Token will be used for enhanced security, 
+  //  accessing the operator, etc
+  string aid = 3 [json_name="access_id"];
+  string atoken = 6 [json_name="access_token"];
+
+  // Unique identifier
   string uid = 4 [json_name="id"];
+
+  // URI to an avatar image, best results it should be 1:1 ratio
+  string avatar = 5 [json_name="avatar"];
 }
