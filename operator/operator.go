@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/golang-plus/uuid" // UUID (RFC 4122)
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 )
 
 /*
