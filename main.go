@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/minimalchat/daemon/server/rest"
 	"github.com/minimalchat/daemon/store"
@@ -34,8 +35,8 @@ func help() {
 
 func init() {
 	// Configuration
-	flag.StringVar(&config.Host, "host", "localhost", "IP to serve http and websocket traffic on")
-	flag.IntVar(&config.Port, "port", 8000, "Port used to serve HTTP and websocket traffic on")
+	flag.StringVar(&config.Host, "host", os.Getenv("HOST"), "IP to serve http and websocket traffic on")
+	flag.StringVar(&config.Port, "port", os.Getenv("PORT"), "Port used to serve HTTP and websocket traffic on")
 	flag.StringVar(&config.SSLCertFile, "ssl-cert", "", "SSL Certificate Filepath")
 	flag.StringVar(&config.SSLKeyFile, "ssl-key", "", "SSL Key Filepath")
 	flag.IntVar(&config.SSLPort, "ssl-port", 4443, "Port used to serve SSL HTTPS and websocket traffic on")
@@ -66,6 +67,6 @@ func main() {
 		go http.ListenAndServeTLS(fmt.Sprintf("%s:%d", config.Host, config.SSLPort), config.SSLCertFile, config.SSLKeyFile, server)
 	}
 
-	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s:%d ...", config.Host, config.Port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Host, config.Port), server))
+	log.Println(INFO, "server:", fmt.Sprintf("Listening on %s:%s ...", config.Host, config.Port))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", config.Host, config.Port), server))
 }

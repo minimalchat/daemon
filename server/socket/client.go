@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/googollee/go-socket.io" // Socket
+	// TODO: Move away from this socket library, it is no longer maintained
+	"github.com/minimalchat/go-socket.io" // Socket
+	// "github.com/googollee/go-socket.io" // Socket
 
 	"github.com/minimalchat/daemon/chat"
 	"github.com/minimalchat/daemon/client"
@@ -28,6 +30,10 @@ type Socket struct {
 	// Socketio connection
 	conn     socketio.Socket
 	connType SocketType
+
+	// Access control
+	// accessId    string
+	// accessToken string
 
 	send chan *SocketMessage
 }
@@ -186,12 +192,54 @@ func (s Socket) onClientTyping(data string) {
 
 // Operator Functions
 
-func (s Socket) onOperatorConnection() {
-	// Create Operator Object
-	op := operator.Create(s.conn.Id())
+func (s Socket) onOperatorConnection(accessId string, accessToken string) {
+
+	var o *operator.Operator
+	// TODO: Is this the best way to go about providing access controls?
+	// Is accessId set?
+	// Is accessToken set?
+	// Get operator with these variables
+	// TODO: What should we do if there is no accessId/accessToken?
+	// TODO: This is the only way we can find the operator right now, we
+	//  need to improve the InMemory store to handle querying
+	operators, err := s.server.store.Search("operator.")
+	if err != nil {
+		// TODO: What should happen here?
+		log.Println(ERROR, "operator", fmt.Sprintf("Something unexpected happened"))
+	}
+
+	for _, op := range operators {
+		log.Println(DEBUG, "operator", "Does operator match", fmt.Sprintf("(%s == %s)", accessId, op.(*operator.Operator).Aid))
+		if op.(*operator.Operator).Aid == accessId &&
+			op.(*operator.Operator).Atoken == accessToken {
+			o = op.(*operator.Operator)
+			break
+		}
+	}
+
+	if o != nil {
+		// TODO: Currently the whole apparatus works off of the Uid..
+		//  So this feels weird.
+		// Update the Uid..
+		o.Uid = s.conn.Id()
+	} else {
+		// If there is no result from the store, create new Operator Object
+		o = operator.Create(s.conn.Id())
+	}
 
 	// Save Operator Object to Data Store
-	s.server.store.Put(op)
+	s.server.store.Put(o)
+
+	b, err := json.Marshal(o)
+	if err != nil {
+		log.Println(ERROR, "operator", err)
+	}
+
+	// Broadcast the new Operator to all Operators
+	s.server.broadcastToOperators <- &SocketMessage{
+		event:   "operator:new",
+		message: string(b),
+	}
 }
 
 func (s Socket) onOperatorMessage(data string) {

@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/googollee/go-socket.io" // Socket
+	// TODO: Move away from this library
+	"github.com/minimalchat/go-socket.io" // Socket
+	// "github.com/googollee/go-socket.io" // Socket
 
 	// "github.com/minimalchat/daemon/chat"
 	// "github.com/minimalchat/daemon/client"
@@ -125,6 +127,8 @@ func (s *Server) onConnect(c socketio.Socket) {
 
 	query := c.Request().URL.Query()
 	connectionType := query.Get("type")
+	accessId := query.Get("accessId")
+	accessToken := query.Get("accessToken")
 	sessionId := query.Get("sessionId")
 
 	// Identify the connection type
@@ -148,6 +152,9 @@ func (s *Server) onConnect(c socketio.Socket) {
 
 		conn:     c,
 		connType: t,
+
+		// accessId:    accessId,
+		// accessToken: accessToken,
 
 		send: make(chan *SocketMessage),
 	}
@@ -185,7 +192,7 @@ func (s *Server) onConnect(c socketio.Socket) {
 		s.registerOperator <- &sock
 
 		// TODO: This may not be the right name for this func now
-		go sock.onOperatorConnection()
+		go sock.onOperatorConnection(accessId, accessToken)
 
 		break
 	case CLIENT:

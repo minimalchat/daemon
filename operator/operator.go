@@ -4,16 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/golang-plus/uuid" // UUID (RFC 4122)
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/wayn3h0/go-uuid" // UUID (RFC 4122)
 )
 
 /*
 Create builds a new `Operator` */
 func Create(id string) *Operator {
-	o := Operator{
-		UserName: "steve",
-	}
+	o := Operator{}
 
 	if id == "" {
 		uuid, _ := uuid.NewRandom()
@@ -56,5 +54,5 @@ func (o Operator) MarshalJSON() ([]byte, error) {
 }
 
 func (o Operator) StoreKey() string {
-	return fmt.Sprintf("operator.%s", o.UserName)
+	return fmt.Sprintf("operator.%s", o.Aid)
 }
