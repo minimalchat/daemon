@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/googollee/go-socket.io" // Socket
+	// TODO: Move away from this library
+	"github.com/minimalchat/go-socket.io" // Socket
+	// "github.com/googollee/go-socket.io" // Socket
 
 	// "github.com/minimalchat/daemon/chat"
 	// "github.com/minimalchat/daemon/client"

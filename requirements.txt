@@ -1,7 +1,7 @@
 golang/protobuf/jsonpb
 github.com/golang/lint/golint
 github.com/julienschmidt/httprouter
-github.com/googollee/go-socket.io
+github.com/minimalchat/go-socket.io
 github.com/golang-plus/uuid
 github.com/go-playground/overalls
 github.com/mattn/goveralls

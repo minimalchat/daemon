@@ -7,7 +7,8 @@ import (
 	"log"
 
 	// TODO: Move away from this socket library, it is no longer maintained
-	"github.com/googollee/go-socket.io" // Socket
+	"github.com/minimalchat/go-socket.io" // Socket
+	// "github.com/googollee/go-socket.io" // Socket
 
 	"github.com/minimalchat/daemon/chat"
 	"github.com/minimalchat/daemon/client"
