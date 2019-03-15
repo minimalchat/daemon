@@ -94,6 +94,8 @@ func createOrUpdateOperator(ds *store.InMemory) func(resp http.ResponseWriter, r
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		if err := decoder.Decode(&op); err != nil {
+			log.Println(ERROR, "api/operator:", err)
+
 			resp.WriteHeader(http.StatusBadRequest)
 
 			fmt.Fprintf(resp, "Bad Request")
@@ -164,6 +166,8 @@ func deleteOperator(ds *store.InMemory) func(resp http.ResponseWriter, req *http
 
 		resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		if err != nil {
+			log.Println(ERROR, "api/operator:", err)
+
 			resp.WriteHeader(http.StatusBadRequest)
 
 			fmt.Fprintf(resp, "Bad Request")
