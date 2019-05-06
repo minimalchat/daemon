@@ -7,11 +7,11 @@ import (
 
 	"github.com/julienschmidt/httprouter" // Http router
 
-	"github.com/minimalchat/daemon/chat"
-	"github.com/minimalchat/daemon/client"
-	"github.com/minimalchat/daemon/operator"
-	"github.com/minimalchat/daemon/server/socket"
-	"github.com/minimalchat/daemon/store" // InMemory store
+	"github.com/minimalchat/daemon/pkg/api/chat"
+	"github.com/minimalchat/daemon/pkg/api/client"
+	"github.com/minimalchat/daemon/pkg/api/operator"
+	"github.com/minimalchat/daemon/pkg/server/socket"
+	"github.com/minimalchat/daemon/pkg/store" // InMemory store
 )
 
 // Log levels
@@ -27,10 +27,12 @@ const (
 Server is the REST API server for Minimal Chat */
 type Server struct {
 	Router *httprouter.Router
-	Config ServerConfig
+	Config
 }
 
-type ServerConfig struct {
+/*
+Config holds all the necessary configuration for our REST API server */
+type Config struct {
 	Protocol string
 	Port     string
 	Host     string
@@ -44,15 +46,16 @@ type ServerConfig struct {
 }
 
 /*
-Listen starts listening on `port` and `host` */
-func Initialize(ds *store.InMemory, config ServerConfig) *Server {
+Initialize takes a Store and ServerConfig starts listening on port and host
+provided by a ServerConfig */
+func Initialize(ds *store.InMemory, c Config) *Server {
 	s := Server{
 		Router: httprouter.New(),
-		Config: config,
+		Config: c,
 	}
 
 	if s.Config.CORSEnabled {
-		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", config.CORSOrigin))
+		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", c.CORSOrigin))
 	}
 
 	// 404

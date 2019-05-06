@@ -30,17 +30,18 @@ func CreateMessage() *Message {
 	return &m
 }
 
+/*
+UnmarshalJSON converts a JSON string (as a byte array) into a Message object */
 func (m *Message) UnmarshalJSON(data []byte) error {
 	u := jsonpb.Unmarshaler{}
 	buf := bytes.NewBuffer(data)
 
-	if err := u.Unmarshal(buf, &*m); err != nil {
-		return err
-	}
-
-	return nil
+	return u.Unmarshal(buf, &*m)
 }
 
+/*
+MarshalJSON converts a Message object into a JSON string returned as a byte
+array */
 func (m Message) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -53,6 +54,9 @@ func (m Message) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (m Message) StoreKey() string {
+/*
+Key implements the Keyer interface of the Store and returns a string used for
+storing the Message in memory. */
+func (m Message) Key() string {
 	return fmt.Sprintf("message.%s-%d", m.Chat, m.Timestamp.Seconds)
 }

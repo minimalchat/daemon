@@ -16,7 +16,7 @@ import (
 	// "github.com/minimalchat/daemon/client"
 	// "github.com/minimalchat/daemon/operator"
 	// "github.com/minimalchat/daemon/person"
-	"github.com/minimalchat/daemon/store" // InMemory store
+	"github.com/minimalchat/daemon/pkg/store" // InMemory store
 )
 
 // Log levels
@@ -34,15 +34,17 @@ type Server struct {
 	store *store.InMemory
 	sock  *socketio.Server
 
-	sockets map[*Socket]bool
+	sockets map[*Conn]bool
 
-	registerClient       chan *Socket
-	registerOperator     chan *Socket
-	unregister           chan *Socket
-	broadcastToOperators chan *SocketMessage
-	broadcastToClient    chan *SocketMessage
+	registerClient       chan *Conn
+	registerOperator     chan *Conn
+	unregister           chan *Conn
+	broadcastToOperators chan *Message
+	broadcastToClient    chan *Message
 }
 
+/*
+Create takes a data store and returns a new socket server */
 func Create(ds *store.InMemory) (*Server, error) {
 	log.Println(DEBUG, "socket:", "Starting WebSocket server ...")
 
@@ -51,15 +53,15 @@ func Create(ds *store.InMemory) (*Server, error) {
 	srv := &Server{
 		store: ds,
 
-		registerClient:   make(chan *Socket),
-		registerOperator: make(chan *Socket),
+		registerClient:   make(chan *Conn),
+		registerOperator: make(chan *Conn),
 
-		unregister: make(chan *Socket),
+		unregister: make(chan *Conn),
 
-		broadcastToOperators: make(chan *SocketMessage),
-		broadcastToClient:    make(chan *SocketMessage),
+		broadcastToOperators: make(chan *Message),
+		broadcastToClient:    make(chan *Message),
 
-		sockets: make(map[*Socket]bool),
+		sockets: make(map[*Conn]bool),
 	}
 
 	sock, err := socketio.NewServer(nil)
@@ -86,121 +88,119 @@ func (s Server) Listen() {
 	for {
 		select {
 		case data := <-s.broadcastToClient:
-			for sock := range s.sockets {
-				if sock.conn.Id() == data.target {
+			for c := range s.sockets {
+				if c.raw.Id() == data.target {
 					select {
-					case sock.send <- data:
+					case c.send <- data:
 					default:
-						close(sock.send)
-						delete(s.sockets, sock)
+						close(c.send)
+						delete(s.sockets, c)
 					}
 				}
 			}
 		case data := <-s.broadcastToOperators:
-			for sock := range s.sockets {
-				if sock.connType == OPERATOR {
+			for c := range s.sockets {
+				if c.category == OPERATOR {
 					select {
-					case sock.send <- data:
+					case c.send <- data:
 					default:
-						log.Println(DEBUG, "socket:", fmt.Sprintf("%s send channel not available, closing ..", sock.conn.Id()))
-						close(sock.send)
-						delete(s.sockets, sock)
+						log.Println(DEBUG, "socket:", fmt.Sprintf("%s send channel not available, closing ..", c.raw.Id()))
+						close(c.send)
+						delete(s.sockets, c)
 					}
 				}
 			}
-		case sock := <-s.registerOperator:
-			s.sockets[sock] = true
-		case sock := <-s.registerClient:
-			s.sockets[sock] = true
-		case sock := <-s.unregister:
-			if _, ok := s.sockets[sock]; ok {
-				delete(s.sockets, sock)
-				close(sock.send)
+		case c := <-s.registerOperator:
+			s.sockets[c] = true
+		case c := <-s.registerClient:
+			s.sockets[c] = true
+		case c := <-s.unregister:
+			if _, ok := s.sockets[c]; ok {
+				delete(s.sockets, c)
+				close(c.send)
 			}
 		}
 	}
 }
 
-func (s *Server) onConnect(c socketio.Socket) {
+func (s *Server) onConnect(raw socketio.Socket) {
 
-	var t SocketType
+	var cat Category
 
-	query := c.Request().URL.Query()
-	connectionType := query.Get("type")
-	accessId := query.Get("accessId")
+	query := raw.Request().URL.Query()
+
+	connType := query.Get("type")
+	accessID := query.Get("accessId")
 	accessToken := query.Get("accessToken")
-	sessionId := query.Get("sessionId")
+	sessionID := query.Get("sessionId")
 
 	// Identify the connection type
-	switch connectionType {
+	switch connType {
 	case "client":
-		t = CLIENT
+		cat = CLIENT
 		break
 	case "operator":
-		t = OPERATOR
+		cat = OPERATOR
 		break
 	default:
 		log.Println(WARNING, "socket:", "Unknown connection type, dropping ...")
 		return
 	}
 
-	log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", t, c.Id()))
+	log.Println(INFO, "socket:", fmt.Sprintf("Incoming %s connection %s", cat, raw.Id()))
 
 	// Create a Socket Connection
-	sock := Socket{
+	conn := Conn{
 		server: s,
 
-		conn:     c,
-		connType: t,
+		raw:      raw,
+		category: cat,
 
-		// accessId:    accessId,
-		// accessToken: accessToken,
-
-		send: make(chan *SocketMessage),
+		send: make(chan *Message),
 	}
 
 	// Start listening for channel messages
-	go sock.Listen()
+	go conn.Listen()
 
 	// Register event types
 	// TODO: Do I really need to listen for both on every socket?
 
-	sock.conn.On("client:message", func(data string) {
-		go sock.onClientMessage(data)
+	conn.raw.On("client:message", func(data string) {
+		go conn.onClientMessage(data)
 	})
 
-	sock.conn.On("client:typing", func(data string) {
-		go sock.onClientTyping(data)
+	conn.raw.On("client:typing", func(data string) {
+		go conn.onClientTyping(data)
 	})
 
-	sock.conn.On("operator:message", func(data string) {
-		go sock.onOperatorMessage(data)
+	conn.raw.On("operator:message", func(data string) {
+		go conn.onOperatorMessage(data)
 	})
 
-	sock.conn.On("operator:typing", func(data string) {
-		go sock.onOperatorTyping(data)
+	conn.raw.On("operator:typing", func(data string) {
+		go conn.onOperatorTyping(data)
 	})
 
-	sock.conn.On("disconnection", func() {
-		s.unregister <- &sock
+	conn.raw.On("disconnection", func() {
+		s.unregister <- &conn
 	})
 
 	// Register the new client, depending on connection type
-	switch sock.connType {
+	switch conn.category {
 	case OPERATOR:
 		// Register the new Socket with the server as an Operator
-		s.registerOperator <- &sock
+		s.registerOperator <- &conn
 
 		// TODO: This may not be the right name for this func now
-		go sock.onOperatorConnection(accessId, accessToken)
+		go conn.onOperatorConnection(accessID, accessToken)
 
 		break
 	case CLIENT:
 		// Register the new Socket with the server as a Client
-		s.registerClient <- &sock
+		s.registerClient <- &conn
 
 		// TODO: This may not be the right name for this func now
-		go sock.onClientConnection(sessionId)
+		go conn.onClientConnection(sessionID)
 
 		break
 	default:

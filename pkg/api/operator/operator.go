@@ -9,7 +9,7 @@ import (
 )
 
 /*
-Create builds a new `Operator` */
+Create takes an optional Id string and returns a new Operator. */
 func Create(id string) *Operator {
 	o := Operator{}
 
@@ -23,6 +23,9 @@ func Create(id string) *Operator {
 	return &o
 }
 
+/*
+GetFullName returns the Operator FirstName and LastName concatenated by a
+space. Implementing the Operator as a Person. */
 func (o *Operator) GetFullName() string {
 	if o != nil {
 		return fmt.Sprintf("%s %s", o.GetFirstName(), o.GetLastName())
@@ -30,6 +33,8 @@ func (o *Operator) GetFullName() string {
 	return ""
 }
 
+/*
+UnmarshalJSON converts a JSON string (as a byte array) into a Operator object. */
 func (o *Operator) UnmarshalJSON(data []byte) error {
 	u := jsonpb.Unmarshaler{}
 	buf := bytes.NewBuffer(data)
@@ -41,6 +46,9 @@ func (o *Operator) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+/*
+MarshalJSON converts a Operator object into a JSON string returned as a byte
+array. */
 func (o Operator) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -53,6 +61,9 @@ func (o Operator) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (o Operator) StoreKey() string {
+/*
+Key implements the Keyer interface of the Store and returns a string used for
+storing the Operator in memory. */
+func (o Operator) Key() string {
 	return fmt.Sprintf("operator.%s", o.Aid)
 }

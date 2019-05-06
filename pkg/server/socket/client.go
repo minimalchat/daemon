@@ -10,80 +10,86 @@ import (
 	"github.com/minimalchat/go-socket.io" // Socket
 	// "github.com/googollee/go-socket.io" // Socket
 
-	"github.com/minimalchat/daemon/chat"
-	"github.com/minimalchat/daemon/client"
-	"github.com/minimalchat/daemon/operator"
-	"github.com/minimalchat/daemon/store" // InMemory Database
+	"github.com/minimalchat/daemon/pkg/api/chat"
+	"github.com/minimalchat/daemon/pkg/api/client"
+	"github.com/minimalchat/daemon/pkg/api/operator"
+	"github.com/minimalchat/daemon/pkg/store" // InMemory Database
 )
 
-type SocketType string
+/*
+Category defines the type of socket connection. */
+type Category string
 
-// Socket Type enum
+/*
+Categories currently allowed */
 const (
-	OPERATOR SocketType = "operator"
-	CLIENT   SocketType = "client"
+	OPERATOR Category = "operator"
+	CLIENT   Category = "client"
 )
 
-type Socket struct {
+/*
+Conn holds the basic information for a socket connection. */
+type Conn struct {
 	server *Server
 
 	// Socketio connection
-	conn     socketio.Socket
-	connType SocketType
+	raw      socketio.Socket
+	category Category
 
-	// Access control
-	// accessId    string
-	// accessToken string
-
-	send chan *SocketMessage
+	send chan *Message
 }
 
-type SocketMessage struct {
+/*
+Message provides all the details to send or receive a message from a socket
+connection. */
+type Message struct {
 	event   string
 	message string
 	target  string
 }
 
-func (s Socket) Listen() {
+/*
+Listen waits for an incoming message to send out through the connection. */
+func (c Conn) Listen() {
 	// Defer closing the socket
 	defer func() {
-		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", s.conn.Id()))
+		log.Println(DEBUG, "socket:", fmt.Sprintf("%s disconnected", c.raw.Id()))
 
-		s.conn.Disconnect()
+		c.raw.Disconnect()
 	}()
 
 	// Listen for send channel messages and emit them
 	for {
 		select {
-		case data, ok := <-s.send:
+		case data, ok := <-c.send:
 			if !ok {
-				log.Println(WARNING, "socket:", fmt.Sprintf("Server closed %s channel", s.conn.Id()))
+				log.Println(WARNING, "socket:", fmt.Sprintf("Server closed %s channel", c.raw.Id()))
 				return
 			}
 
 			if data.message == "" {
-				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s", data.event, s.conn.Id()))
+				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s", data.event, c.raw.Id()))
 
 			} else {
-				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, s.conn.Id(), data.message))
+				log.Println(DEBUG, "socket:", fmt.Sprintf("Emitting '%s' to %s '%s'", data.event, c.raw.Id(), data.message))
 			}
 
-			s.conn.Emit(data.event, data.message)
+			c.raw.Emit(data.event, data.message)
 		}
 	}
 }
 
 // Client Functions
 
-func (s Socket) onClientConnection(sessionId string) {
+func (c Conn) onClientConnection(sid string) {
 
 	var cl *client.Client
 	var ch *chat.Chat
-	var storeBuffer store.StoreKeyer
+	var storeBuffer store.Keyer
 	var event string
 
 	// Get all Clients
-	storeBuffer, _ = s.server.store.Get(fmt.Sprintf("client.%s", sessionId))
+	storeBuffer, _ = c.server.store.Get(fmt.Sprintf("client.%s", sid))
 
 	if storeBuffer != nil {
 		// Hijack Client object with new Socket ID
@@ -92,30 +98,30 @@ func (s Socket) onClientConnection(sessionId string) {
 			LastName:  storeBuffer.(*client.Client).LastName,
 			Name:      storeBuffer.(*client.Client).Name,
 			Uid:       storeBuffer.(*client.Client).Uid,
-			Sid:       s.conn.Id(),
+			Sid:       c.raw.Id(),
 		}
 	}
 
 	if cl == nil {
 		// Create Client Object
-		cl = client.Create(s.conn.Id())
+		cl = client.Create(c.raw.Id())
 
 		// Save Client Object to Data Store
-		s.server.store.Put(cl)
+		c.server.store.Put(cl)
 
 		// Create Chat Object
 		ch = chat.Create(cl)
 
 		// Save Chat Object to Data Store
-		s.server.store.Put(ch)
+		c.server.store.Put(ch)
 
 		event = "chat:new"
 	} else {
 		// Save Client Object to Data Store with updated Sid
-		s.server.store.Put(cl)
+		c.server.store.Put(cl)
 
 		// Get Chat Object
-		storeBuffer, _ = s.server.store.Get(fmt.Sprintf("chat.%s", cl.Uid))
+		storeBuffer, _ = c.server.store.Get(fmt.Sprintf("chat.%s", cl.Uid))
 
 		// Hijack the Chat Object
 		ch = &chat.Chat{
@@ -128,90 +134,91 @@ func (s Socket) onClientConnection(sessionId string) {
 		}
 
 		// Save Chat Object to Data Store with updated Client
-		s.server.store.Put(ch)
+		c.server.store.Put(ch)
 
 		event = "chat:existing"
 	}
 
 	// Convert Chat to JSON
-	chJson, _ := json.Marshal(ch)
+	chJSON, _ := json.Marshal(ch)
 	var buffer bytes.Buffer
-	buffer.Write(chJson)
+	buffer.Write(chJSON)
 	// buffer.WriteString("\n")
 
-	sm := SocketMessage{
+	m := Message{
 		event:   event,
 		message: buffer.String(),
 		target:  "",
 	}
 
 	// Broadcast Chat to Operators
-	s.server.broadcastToOperators <- &sm
+	c.server.broadcastToOperators <- &m
 
 	// Send Chat back to Client
-	s.send <- &sm
+	c.send <- &m
 }
 
-func (s Socket) onClientMessage(data string) {
+func (c Conn) onClientMessage(m string) {
 	// Create message from JSON
 	var msg chat.Message
 
-	json.Unmarshal([]byte(data), &msg)
+	json.Unmarshal([]byte(m), &msg)
 
-	log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", s.conn.Id(), msg.Content))
+	log.Println(DEBUG, "client", fmt.Sprintf("%s: %s", c.raw.Id(), msg.Content))
 
 	//  Save Message to Data Store
-	s.server.store.Put(msg)
+	c.server.store.Put(msg)
 
 	// TODO:
 	//  Update Chat Object
 	//  Save Chat Object to Data Store?
 
 	// Broadcast to Operators
-	s.server.broadcastToOperators <- &SocketMessage{
+	c.server.broadcastToOperators <- &Message{
 		event:   "client:message",
-		message: data,
+		message: m,
 		target:  "",
 	}
 }
 
-func (s Socket) onClientTyping(data string) {
+func (c Conn) onClientTyping(m string) {
 	// Create message from JSON
 	var msg chat.Message
 
-	json.Unmarshal([]byte(data), &msg)
+	json.Unmarshal([]byte(m), &msg)
 
-	log.Println(DEBUG, "client", fmt.Sprintf("%s: typing ...", s.conn.Id()))
+	log.Println(DEBUG, "client", fmt.Sprintf("%s: typing ...", c.raw.Id()))
 
-	s.server.broadcastToOperators <- &SocketMessage{
+	c.server.broadcastToOperators <- &Message{
 		event:   "client:typing",
-		message: data,
+		message: m,
 		target:  "",
 	}
 }
 
 // Operator Functions
 
-func (s Socket) onOperatorConnection(accessId string, accessToken string) {
+func (c Conn) onOperatorConnection(id string, t string) {
 
 	var o *operator.Operator
 	// TODO: Is this the best way to go about providing access controls?
-	// Is accessId set?
-	// Is accessToken set?
+	// Is id set?
+	// Is token set?
 	// Get operator with these variables
-	// TODO: What should we do if there is no accessId/accessToken?
+	// TODO: What should we do if there is no id/token (access ID,
+	//  access token)?
 	// TODO: This is the only way we can find the operator right now, we
 	//  need to improve the InMemory store to handle querying
-	operators, err := s.server.store.Search("operator.")
+	operators, err := c.server.store.Search("operator.")
 	if err != nil {
 		// TODO: What should happen here?
 		log.Println(ERROR, "operator", fmt.Sprintf("Something unexpected happened"))
 	}
 
 	for _, op := range operators {
-		log.Println(DEBUG, "operator", "Does operator match", fmt.Sprintf("(%s == %s)", accessId, op.(*operator.Operator).Aid))
-		if op.(*operator.Operator).Aid == accessId &&
-			op.(*operator.Operator).Atoken == accessToken {
+		log.Println(DEBUG, "operator", "Does operator match", fmt.Sprintf("(%s == %s)", id, op.(*operator.Operator).Aid))
+		if op.(*operator.Operator).Aid == id &&
+			op.(*operator.Operator).Atoken == t {
 			o = op.(*operator.Operator)
 			break
 		}
@@ -221,14 +228,14 @@ func (s Socket) onOperatorConnection(accessId string, accessToken string) {
 		// TODO: Currently the whole apparatus works off of the Uid..
 		//  So this feels weird.
 		// Update the Uid..
-		o.Uid = s.conn.Id()
+		o.Uid = c.raw.Id()
 	} else {
 		// If there is no result from the store, create new Operator Object
-		o = operator.Create(s.conn.Id())
+		o = operator.Create(c.raw.Id())
 	}
 
 	// Save Operator Object to Data Store
-	s.server.store.Put(o)
+	c.server.store.Put(o)
 
 	b, err := json.Marshal(o)
 	if err != nil {
@@ -236,27 +243,27 @@ func (s Socket) onOperatorConnection(accessId string, accessToken string) {
 	}
 
 	// Broadcast the new Operator to all Operators
-	s.server.broadcastToOperators <- &SocketMessage{
+	c.server.broadcastToOperators <- &Message{
 		event:   "operator:new",
 		message: string(b),
 	}
 }
 
-func (s Socket) onOperatorMessage(data string) {
+func (c Conn) onOperatorMessage(m string) {
 	// Create message from JSON
 	var msg chat.Message
 
-	json.Unmarshal([]byte(data), &msg)
+	json.Unmarshal([]byte(m), &msg)
 
-	log.Println(DEBUG, "operator", fmt.Sprintf("%s: %s", s.conn.Id(), msg.Content))
+	log.Println(DEBUG, "operator", fmt.Sprintf("%s: %s", c.raw.Id(), msg.Content))
 
 	// Save Message to Data Store
-	s.server.store.Put(msg)
+	c.server.store.Put(msg)
 
 	// TODO: Update Chat Object?
 	// TODO: Save Chat Object to Data Store?
 
-	storeBuffer, _ := s.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
+	storeBuffer, _ := c.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
 
 	if storeBuffer == nil {
 		log.Println(ERROR, "operator:", fmt.Sprintf("Client %s does not exist!", msg.Chat))
@@ -273,22 +280,22 @@ func (s Socket) onOperatorMessage(data string) {
 		Sid:       storeBuffer.(*client.Client).Sid,
 	}
 
-	s.server.broadcastToClient <- &SocketMessage{
+	c.server.broadcastToClient <- &Message{
 		event:   "operator:message",
-		message: data,
+		message: m,
 		target:  cl.Sid,
 	}
 }
 
-func (s Socket) onOperatorTyping(data string) {
+func (c Conn) onOperatorTyping(m string) {
 	// Create message from JSON
 	var msg chat.Message
 
-	json.Unmarshal([]byte(data), &msg)
+	json.Unmarshal([]byte(m), &msg)
 
-	log.Println(DEBUG, "operator", fmt.Sprintf("%s: typing ...", s.conn.Id()))
+	log.Println(DEBUG, "operator", fmt.Sprintf("%s: typing ...", c.raw.Id()))
 
-	storeBuffer, _ := s.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
+	storeBuffer, _ := c.server.store.Get(fmt.Sprintf("client.%s", msg.Chat))
 
 	if storeBuffer == nil {
 		log.Println(ERROR, "operator:", fmt.Sprintf("Client %s does not exist!", msg.Chat))
@@ -305,9 +312,9 @@ func (s Socket) onOperatorTyping(data string) {
 		Sid:       storeBuffer.(*client.Client).Sid,
 	}
 
-	s.server.broadcastToClient <- &SocketMessage{
+	c.server.broadcastToClient <- &Message{
 		event:   "operator:typing",
-		message: data,
+		message: m,
 		target:  cl.Sid,
 	}
 }

@@ -35,9 +35,12 @@ clean:
 	rm -rf $(DIST)/mnml-daemon
 
 protob-gen:
-	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mclient/client.proto=github.com/minimalchat/daemon/client:. client/*.proto
-	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mclient/client.proto=github.com/minimalchat/daemon/client:. chat/*.proto
-	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mclient/client.proto=github.com/minimalchat/daemon/client:. operator/*.proto
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mpkg/api/client/client.proto=github.com/minimalchat/daemon/pkg/api/client:. pkg/api/client/*.proto
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mpkg/api/client/client.proto=github.com/minimalchat/daemon/pkg/api/client:. pkg/api/chat/*.proto
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mpkg/api/client/client.proto=github.com/minimalchat/daemon/pkg/api/client:. pkg/api/operator/*.proto
+	protoc --plugin=protoc-gen-go=$(GOPATH)bin/protoc-gen-go --go_out=Mpkg/api/client/client.proto=github.com/minimalchat/daemon/pkg/api/client,Mpkg/api/chat/chat.proto=github.com/minimalchat/daemon/pkg/api/chat,Mpkg/api/operator/operator.proto=github.com/minimalchat/daemon/pkg/api/operator:. pkg/api/webhook/*.proto
+
+
 
 compile:
 	mkdir -p $(DIST)

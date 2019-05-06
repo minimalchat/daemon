@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/minimalchat/daemon/server/rest"
-	"github.com/minimalchat/daemon/store"
+	"github.com/minimalchat/daemon/pkg/server/rest"
+	"github.com/minimalchat/daemon/pkg/store"
 )
 
 // Log levels
@@ -20,7 +20,7 @@ const (
 	FATAL   string = "FATAL"
 )
 
-var config rest.ServerConfig
+var config rest.Config
 var needHelp bool
 
 func help() {
@@ -41,7 +41,7 @@ func init() {
 	flag.StringVar(&config.SSLKeyFile, "ssl-key", "", "SSL Key Filepath")
 	flag.IntVar(&config.SSLPort, "ssl-port", 4443, "Port used to serve SSL HTTPS and websocket traffic on")
 	flag.StringVar(&config.CORSOrigin, "cors-origin", "http://localhost:3000", "Host to allow cross origin resource sharing (CORS)")
-	flag.BoolVar(&config.CORSEnabled, "cors", false, "Set if the daemon will handle CORS")
+	flag.BoolVar(&config.CORSEnabled, "cors", true, "Set if the daemon will handle CORS")
 	flag.BoolVar(&needHelp, "h", false, "Get help")
 }
 
