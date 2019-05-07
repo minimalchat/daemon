@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	// "errors"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -111,15 +112,15 @@ func (w *Webhook) Run(t string, d []byte) error {
 	c := &http.Client{}
 
 	e := CreateEvent(t)
-	e.Data = d
+	e.Data = string(d)
 
-	b, err := e.MarshalJSON()
+	b, err := json.Marshal(e)
 	if err != nil {
 		return err
 	}
 
 	req, err := http.NewRequest("POST", w.Uri, bytes.NewBuffer(b))
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
 	sigPayload := fmt.Sprintf("%d.%s", e.CreationTime.GetSeconds(), b)
 
@@ -129,7 +130,7 @@ func (w *Webhook) Run(t string, d []byte) error {
 
 	sig := fmt.Sprintf("t=%d,v1=%x", e.CreationTime.GetSeconds(), hmac.Sum(nil))
 
-	req.Header.Add("Mnml-Signature", sig)
+	req.Header.Set("Mnml-Signature", sig)
 
 	resp, err := c.Do(req)
 

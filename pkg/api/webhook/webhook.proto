@@ -9,7 +9,8 @@ import "google/protobuf/timestamp.proto";
 message Event {
   string id = 1;
   string type = 2;
-  bytes data = 3;
+  // JSON string of data
+  string data = 3;
   google.protobuf.Timestamp creation_time = 4 [json_name="creation_time"]; 
 }
 
