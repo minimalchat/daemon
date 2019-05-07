@@ -13,6 +13,7 @@ import (
 	"github.com/minimalchat/daemon/pkg/api/chat"
 	"github.com/minimalchat/daemon/pkg/api/client"
 	"github.com/minimalchat/daemon/pkg/api/operator"
+	"github.com/minimalchat/daemon/pkg/api/webhook"
 	"github.com/minimalchat/daemon/pkg/store" // InMemory Database
 )
 
@@ -79,6 +80,27 @@ func (c Conn) Listen() {
 	}
 }
 
+func (c Conn) runWebhooks(e []string, d []byte) {
+	for i := 0; i < len(e); i++ {
+		w, err := webhook.GetByEventType(c.server.store, e[i])
+		if err != nil {
+			log.Println(WARNING, "webhooks:", err)
+			continue
+		} else {
+			log.Println(DEBUG, "webhooks:", fmt.Sprintf("Processing webhooks for '%s' (%d found)", e[i], len(w)))
+
+			for j := 0; j < len(w); j++ {
+				// Run the Webhook, sending event and data along to the
+				//  Webhook's defined endpoint
+				err := w[j].Run(e[i], d)
+				if err != nil {
+					log.Println(WARNING, "webhooks:", fmt.Sprintf("%s:", e[i]), err)
+				}
+			}
+		}
+	}
+}
+
 // Client Functions
 
 func (c Conn) onClientConnection(sid string) {
@@ -116,6 +138,17 @@ func (c Conn) onClientConnection(sid string) {
 		c.server.store.Put(ch)
 
 		event = "chat:new"
+
+		// Call any webhooks if they exist
+		b, err := json.Marshal(ch)
+		if err != nil {
+			log.Println(WARNING, "client", err)
+		} else {
+			c.runWebhooks([]string{
+				webhook.EventNewChat,
+				webhook.EventNewClient,
+			}, b)
+		}
 	} else {
 		// Save Client Object to Data Store with updated Sid
 		c.server.store.Put(cl)
@@ -172,6 +205,8 @@ func (c Conn) onClientMessage(m string) {
 	// TODO:
 	//  Update Chat Object
 	//  Save Chat Object to Data Store?
+	// Run any webhooks if they exist
+	c.runWebhooks([]string{webhook.EventNewClientMessage}, []byte(m))
 
 	// Broadcast to Operators
 	c.server.broadcastToOperators <- &Message{
@@ -232,6 +267,13 @@ func (c Conn) onOperatorConnection(id string, t string) {
 	} else {
 		// If there is no result from the store, create new Operator Object
 		o = operator.Create(c.raw.Id())
+
+		b, err := json.Marshal(o)
+		if err != nil {
+			log.Println(ERROR, "operator", err)
+		} else {
+			c.runWebhooks([]string{webhook.EventNewOperator}, b)
+		}
 	}
 
 	// Save Operator Object to Data Store

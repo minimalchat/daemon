@@ -2,17 +2,24 @@ syntax = "proto3";
 package webhook;
 
 import "google/protobuf/timestamp.proto";
-import "pkg/api/client/client.proto";
-import "pkg/api/operator/operator.proto";
-import "pkg/api/chat/chat.proto";
+// import "pkg/api/client/client.proto";
+// import "pkg/api/operator/operator.proto";
+// import "pkg/api/chat/chat.proto";
 
 message Event {
-  string type = 1;
-  bytes data = 2;
-  google.protobuf.Timestamp creation_time = 3 [json_name="creation_time"]; 
+  string id = 1;
+  string type = 2;
+  bytes data = 3;
+  google.protobuf.Timestamp creation_time = 4 [json_name="creation_time"]; 
 }
 
 message Webhook {
-  google.protobuf.Timestamp creation_time = 1 [json_name="creation_time"];
-  google.protobuf.Timestamp updated_time = 2 [json_name="update_time"];
+  string id = 1;
+  repeated string event_types = 2 [json_name="event_types"];
+  bool enabled = 3;
+  string secret = 4;
+  string uri = 5;
+
+  google.protobuf.Timestamp creation_time = 6 [json_name="creation_time"];
+  google.protobuf.Timestamp updated_time = 7 [json_name="update_time"];
 }

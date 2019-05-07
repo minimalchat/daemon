@@ -39,11 +39,7 @@ func (o *Operator) UnmarshalJSON(data []byte) error {
 	u := jsonpb.Unmarshaler{}
 	buf := bytes.NewBuffer(data)
 
-	if err := u.Unmarshal(buf, &*o); err != nil {
-		return err
-	}
-
-	return nil
+	return u.Unmarshal(buf, &*o)
 }
 
 /*

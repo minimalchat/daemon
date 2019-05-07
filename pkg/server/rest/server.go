@@ -10,6 +10,7 @@ import (
 	"github.com/minimalchat/daemon/pkg/api/chat"
 	"github.com/minimalchat/daemon/pkg/api/client"
 	"github.com/minimalchat/daemon/pkg/api/operator"
+	"github.com/minimalchat/daemon/pkg/api/webhook"
 	"github.com/minimalchat/daemon/pkg/server/socket"
 	"github.com/minimalchat/daemon/pkg/store" // InMemory store
 )
@@ -107,6 +108,9 @@ func Initialize(ds *store.InMemory, c Config) *Server {
 
 	// Chats API
 	chat.Routes(s.Router, ds)
+
+	// Webhook API
+	webhook.Routes(s.Router, ds)
 
 	return &s
 }
