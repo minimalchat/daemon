@@ -92,7 +92,7 @@ func (c Conn) runWebhooks(e []string, d []byte) {
 			for j := 0; j < len(w); j++ {
 				// Run the Webhook, sending event and data along to the
 				//  Webhook's defined endpoint
-				err := w[j].Run(e[i], d)
+				err := w[j].Run(e[i], d, c.server.Id)
 				if err != nil {
 					log.Println(WARNING, "webhooks:", fmt.Sprintf("%s:", e[i]), err)
 				}

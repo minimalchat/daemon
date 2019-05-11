@@ -4,7 +4,7 @@ RUN mkdir -p /daemon
 WORKDIR /daemon
 
 RUN apt update
-RUN apt install -y golang
+RUN apt install -y golang ca-certificates
 
 COPY dist/daemon /daemon/server
 

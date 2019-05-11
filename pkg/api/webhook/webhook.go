@@ -108,11 +108,12 @@ daemon service and not anywhere else.
 To manually verify the signature, take t and concat it with the JSON payload
 received, separated by a '.' dot. Use the Webhook's secret to sign the
 concatenated timestamp.payload and it should equal v1. */
-func (w *Webhook) Run(t string, d []byte) error {
+func (w *Webhook) Run(t string, d []byte, n string) error {
 	c := &http.Client{}
 
 	e := CreateEvent(t)
 	e.Data = string(d)
+	e.SourceId = n
 
 	b, err := json.Marshal(e)
 	if err != nil {

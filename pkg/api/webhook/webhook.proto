@@ -11,7 +11,8 @@ message Event {
   string type = 2;
   // JSON string of data
   string data = 3;
-  google.protobuf.Timestamp creation_time = 4 [json_name="creation_time"]; 
+  string source_id = 4 [json_name="source_id"];
+  google.protobuf.Timestamp creation_time = 5 [json_name="creation_time"]; 
 }
 
 message Webhook {

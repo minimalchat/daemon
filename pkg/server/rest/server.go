@@ -38,6 +38,8 @@ type Config struct {
 	Port     string
 	Host     string
 
+	Id string
+
 	SSLCertFile string
 	SSLKeyFile  string
 	SSLPort     int
@@ -83,6 +85,7 @@ func Initialize(ds *store.InMemory, c Config) *Server {
 
 	// Socket.io
 	sock, err := socket.Create(ds)
+	sock.Id = c.Id
 
 	if err != nil {
 		log.Fatal(err)
@@ -137,5 +140,5 @@ func defaultRoute(resp http.ResponseWriter, req *http.Request, params httprouter
 	resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	resp.WriteHeader(http.StatusOK)
 	// TODO: Make this less hacky?
-	fmt.Fprint(resp, "{\"clients\": \"/api/clients\", \"client\": \"/api/client/:id\", \"chats\":\"/api/chats\", \"chat\":\"/api/chat/:id\", \"messages\":\"/api/chat/:id/messages\", \"message\":\"/api/chat/:id/message/:mid\", \"operators\":\"/api/operators\", \"operators\":\"/api/operators\", \"operator\":\"/api/operator/:id\"}")
+	fmt.Fprint(resp, "{\"clients\": \"/api/clients\", \"client\": \"/api/client/:id\", \"chats\":\"/api/chats\", \"chat\":\"/api/chat/:id\", \"messages\":\"/api/chat/:id/messages\", \"message\":\"/api/chat/:id/message/:mid\", \"operators\":\"/api/operators\", \"operators\":\"/api/operators\", \"operator\":\"/api/operator/:id\", \"webhooks\":\"/api/webhooks\", \"webhook\":\"/api/webhook/:id\"}")
 }
