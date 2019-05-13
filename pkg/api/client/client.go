@@ -9,7 +9,7 @@ import (
 )
 
 /*
-Create builds a new `Client` */
+Create takes a Sid identifier string and returns a new Client. */
 func Create(sid string) *Client {
 	c := Client{
 		FirstName: "Site",
@@ -27,6 +27,9 @@ func Create(sid string) *Client {
 	return &c
 }
 
+/*
+GetFullName returns the Client FirstName and LastName concatenated by a space.
+Implementing the Client as a Person. */
 func (c *Client) GetFullName() string {
 	if c != nil {
 		return fmt.Sprintf("%s %s", c.GetFirstName(), c.GetLastName())
@@ -34,17 +37,18 @@ func (c *Client) GetFullName() string {
 	return ""
 }
 
+/*
+UnmarshalJSON converts a JSON string (as a byte array) into a Client object. */
 func (c *Client) UnmarshalJSON(data []byte) error {
 	u := jsonpb.Unmarshaler{}
 	buf := bytes.NewBuffer(data)
 
-	if err := u.Unmarshal(buf, &*c); err != nil {
-		return err
-	}
-
-	return nil
+	return u.Unmarshal(buf, &*c)
 }
 
+/*
+MarshalJSON converts a Client object into a JSON string returned as a byte
+array. */
 func (c Client) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -57,6 +61,9 @@ func (c Client) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (c Client) StoreKey() string {
+/*
+Key implements the Keyer interface of the Store and returns a string used for
+storing the Client in memory. */
+func (c Client) Key() string {
 	return fmt.Sprintf("client.%s", c.Uid)
 }

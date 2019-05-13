@@ -2,7 +2,7 @@ syntax = "proto3";
 package chat;
 
 import "google/protobuf/timestamp.proto";
-import "client/client.proto";
+import "pkg/api/client/client.proto";
 
 message Chat {
   google.protobuf.Timestamp creation_time = 1 [json_name="creation_time"];

@@ -8,7 +8,7 @@ import (
 
 	"github.com/julienschmidt/httprouter" // Router
 
-	"github.com/minimalchat/daemon/store"
+	"github.com/minimalchat/daemon/pkg/store"
 )
 
 // Log levels

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/minimalchat/daemon/server/rest"
-	"github.com/minimalchat/daemon/store"
+	"github.com/minimalchat/daemon/pkg/server/rest"
+	"github.com/minimalchat/daemon/pkg/store"
 )
 
 // Log levels
@@ -20,7 +20,7 @@ const (
 	FATAL   string = "FATAL"
 )
 
-var config rest.ServerConfig
+var config rest.Config
 var needHelp bool
 
 func help() {
@@ -37,6 +37,7 @@ func init() {
 	// Configuration
 	flag.StringVar(&config.Host, "host", os.Getenv("HOST"), "IP to serve http and websocket traffic on")
 	flag.StringVar(&config.Port, "port", os.Getenv("PORT"), "Port used to serve HTTP and websocket traffic on")
+	flag.StringVar(&config.Id, "id", "", "A string used to identify the server in outbound HTTP requests")
 	flag.StringVar(&config.SSLCertFile, "ssl-cert", "", "SSL Certificate Filepath")
 	flag.StringVar(&config.SSLKeyFile, "ssl-key", "", "SSL Key Filepath")
 	flag.IntVar(&config.SSLPort, "ssl-port", 4443, "Port used to serve SSL HTTPS and websocket traffic on")

@@ -7,11 +7,12 @@ import (
 
 	"github.com/julienschmidt/httprouter" // Http router
 
-	"github.com/minimalchat/daemon/chat"
-	"github.com/minimalchat/daemon/client"
-	"github.com/minimalchat/daemon/operator"
-	"github.com/minimalchat/daemon/server/socket"
-	"github.com/minimalchat/daemon/store" // InMemory store
+	"github.com/minimalchat/daemon/pkg/api/chat"
+	"github.com/minimalchat/daemon/pkg/api/client"
+	"github.com/minimalchat/daemon/pkg/api/operator"
+	"github.com/minimalchat/daemon/pkg/api/webhook"
+	"github.com/minimalchat/daemon/pkg/server/socket"
+	"github.com/minimalchat/daemon/pkg/store" // InMemory store
 )
 
 // Log levels
@@ -27,13 +28,17 @@ const (
 Server is the REST API server for Minimal Chat */
 type Server struct {
 	Router *httprouter.Router
-	Config ServerConfig
+	Config
 }
 
-type ServerConfig struct {
+/*
+Config holds all the necessary configuration for our REST API server */
+type Config struct {
 	Protocol string
 	Port     string
 	Host     string
+
+	Id string
 
 	SSLCertFile string
 	SSLKeyFile  string
@@ -44,15 +49,16 @@ type ServerConfig struct {
 }
 
 /*
-Listen starts listening on `port` and `host` */
-func Initialize(ds *store.InMemory, config ServerConfig) *Server {
+Initialize takes a Store and ServerConfig starts listening on port and host
+provided by a ServerConfig */
+func Initialize(ds *store.InMemory, c Config) *Server {
 	s := Server{
 		Router: httprouter.New(),
-		Config: config,
+		Config: c,
 	}
 
 	if s.Config.CORSEnabled {
-		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", config.CORSOrigin))
+		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", c.CORSOrigin))
 	}
 
 	// 404
@@ -79,6 +85,7 @@ func Initialize(ds *store.InMemory, config ServerConfig) *Server {
 
 	// Socket.io
 	sock, err := socket.Create(ds)
+	sock.Id = c.Id
 
 	if err != nil {
 		log.Fatal(err)
@@ -105,6 +112,9 @@ func Initialize(ds *store.InMemory, config ServerConfig) *Server {
 	// Chats API
 	chat.Routes(s.Router, ds)
 
+	// Webhook API
+	webhook.Routes(s.Router, ds)
+
 	return &s
 }
 
@@ -130,5 +140,5 @@ func defaultRoute(resp http.ResponseWriter, req *http.Request, params httprouter
 	resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	resp.WriteHeader(http.StatusOK)
 	// TODO: Make this less hacky?
-	fmt.Fprint(resp, "{\"clients\": \"/api/clients\", \"client\": \"/api/client/:id\", \"chats\":\"/api/chats\", \"chat\":\"/api/chat/:id\", \"messages\":\"/api/chat/:id/messages\", \"message\":\"/api/chat/:id/message/:mid\", \"operators\":\"/api/operators\", \"operators\":\"/api/operators\", \"operator\":\"/api/operator/:id\"}")
+	fmt.Fprint(resp, "{\"clients\": \"/api/clients\", \"client\": \"/api/client/:id\", \"chats\":\"/api/chats\", \"chat\":\"/api/chat/:id\", \"messages\":\"/api/chat/:id/messages\", \"message\":\"/api/chat/:id/message/:mid\", \"operators\":\"/api/operators\", \"operators\":\"/api/operators\", \"operator\":\"/api/operator/:id\", \"webhooks\":\"/api/webhooks\", \"webhook\":\"/api/webhook/:id\"}")
 }
