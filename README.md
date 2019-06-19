@@ -3,6 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/minimalchat/daemon?status.svg)](https://godoc.org/github.com/minimalchat/daemon)
 [![Build Status](https://travis-ci.org/minimalchat/daemon.svg?branch=master)](https://travis-ci.org/minimalchat/daemon)
 [![Coverage Status](https://coveralls.io/repos/github/minimalchat/daemon/badge.svg?branch=master)](https://coveralls.io/github/minimalchat/daemon?branch=master)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fminimalchat%2Fdaemon.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fminimalchat%2Fdaemon?ref=badge_shield)
 
 ---
 
@@ -55,3 +56,7 @@ Flags:
     	Port used to serve SSL HTTPS and websocket traffic on (default 4443)
 
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fminimalchat%2Fdaemon.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fminimalchat%2Fdaemon?ref=badge_large)
