@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/julienschmidt/httprouter" // Http router
 
@@ -38,13 +40,13 @@ type Config struct {
 	Port     string
 	Host     string
 
-	Id string
+	ID string
 
 	SSLCertFile string
 	SSLKeyFile  string
 	SSLPort     int
 
-	CORSOrigin  string
+	CORSOrigins string
 	CORSEnabled bool
 }
 
@@ -58,7 +60,7 @@ func Initialize(ds *store.InMemory, c Config) *Server {
 	}
 
 	if s.Config.CORSEnabled {
-		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", c.CORSOrigin))
+		log.Println(DEBUG, "server:", fmt.Sprintf("Setting CORS origin to %s", c.CORSOrigins))
 	}
 
 	// 404
@@ -85,7 +87,7 @@ func Initialize(ds *store.InMemory, c Config) *Server {
 
 	// Socket.io
 	sock, err := socket.Create(ds)
-	sock.Id = c.Id
+	sock.ID = c.ID
 
 	if err != nil {
 		log.Fatal(err)
@@ -95,7 +97,22 @@ func Initialize(ds *store.InMemory, c Config) *Server {
 
 	s.Router.HandlerFunc("GET", "/socket.io/", func(w http.ResponseWriter, r *http.Request) {
 		if s.Config.CORSEnabled {
-			w.Header().Set("Access-Control-Allow-Origin", s.Config.CORSOrigin)
+			regx := regexp.MustCompile(`https?:\/\/`)
+			pro := r.Header.Get("Origin")
+			ro := regx.ReplaceAllString(pro, "")
+			if len(ro) > 0 {
+				log.Println(DEBUG, "server:", fmt.Sprintf("Comparing incoming request host %s, with CORS Origins (%s)", ro, s.Config.CORSOrigins))
+				po := strings.Split(s.Config.CORSOrigins, ",")
+				for i := 0; i < len(po); i++ {
+					o := regx.ReplaceAllString(po[i], "")
+					if strings.Contains(strings.Trim(ro, " "), strings.Trim(o, " ")) {
+						log.Println(DEBUG, "server:", fmt.Sprintf("Sending CORS Access-Control-Allow-Origin for %s", po[i]))
+						w.Header().Set("Access-Control-Allow-Origin", pro)
+
+						break
+					}
+				}
+			}
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
 		}
@@ -120,7 +137,21 @@ func Initialize(ds *store.InMemory, c Config) *Server {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.Config.CORSEnabled {
-		w.Header().Set("Access-Control-Allow-Origin", s.Config.CORSOrigin)
+		regx := regexp.MustCompile(`https?:\/\/`)
+		pro := r.Header.Get("Origin")
+		ro := regx.ReplaceAllString(pro, "")
+		if len(ro) > 0 {
+			log.Println(DEBUG, "server:", fmt.Sprintf("Comparing incoming request host %s, with CORS Origins (%s)", ro, s.Config.CORSOrigins))
+			po := strings.Split(s.Config.CORSOrigins, ",")
+			for i := 0; i < len(po); i++ {
+				o := regx.ReplaceAllString(po[i], "")
+				if strings.Contains(strings.Trim(ro, " "), strings.Trim(o, " ")) {
+					log.Println(DEBUG, "server:", fmt.Sprintf("Sending CORS Access-Control-Allow-Origin for %s", po[i]))
+					w.Header().Set("Access-Control-Allow-Origin", pro)
+					break
+				}
+			}
+		}
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		// resp.Header().Set("Access-Control-Allow-Headers", "X-Socket-Type")
 	}
