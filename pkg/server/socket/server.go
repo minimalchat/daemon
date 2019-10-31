@@ -31,7 +31,7 @@ const (
 /*
 Server is the socket.io abstraction for Minimal Chat */
 type Server struct {
-	Id    string
+	ID    string
 	store *store.InMemory
 	sock  *socketio.Server
 

@@ -1,8 +1,9 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial-20190515
 
 RUN mkdir -p /daemon
 WORKDIR /daemon
 
+RUN apt clean && cat /etc/apt/sources.list
 RUN apt update
 RUN apt install -y golang ca-certificates
 
